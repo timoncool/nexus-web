@@ -51,8 +51,23 @@ function hueCorrected(hex: string, lut: readonly (readonly [number, number])[]):
   return `#${[f(5), f(3), f(1)].map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('')}`;
 }
 
-function conicOf(stops: NonNullable<GaugeProps['ambient']>, matrix: GaugeProps['ambientMatrix'], lut: GaugeProps['ambientHueLut']): string {
-  const fix = (c: string) => (lut ? hueCorrected(c, lut) : matrix ? corrected(c, matrix) : c);
+/** Scales the colour so its value becomes value^(1/gamma); hue and saturation stay. */
+function lifted(hex: string, gamma: number): string {
+  const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const max = Math.max(...c);
+  if (max <= 0 || max >= 1) return hex;
+  const k = max ** (1 / gamma) / max;
+  return `#${c.map(v => Math.round(Math.min(1, v * k) * 255).toString(16).padStart(2, '0')).join('')}`;
+}
+
+function conicOf(
+  stops: NonNullable<GaugeProps['ambient']>,
+  matrix: GaugeProps['ambientMatrix'],
+  lut: GaugeProps['ambientHueLut'],
+  gamma: GaugeProps['ambientGamma'],
+): string {
+  const hued = (c: string) => (lut ? hueCorrected(c, lut) : matrix ? corrected(c, matrix) : c);
+  const fix = (c: string) => (gamma && gamma !== 1 ? lifted(hued(c), gamma) : hued(c));
   const parts = stops.map(s => `${fix(s.color)} ${(s.at * 100).toFixed(1)}%`);
   // Closing on the first colour keeps the seam at 12 o'clock invisible.
   return `conic-gradient(from 0deg, ${parts.join(', ')}, ${parts[0].split(' ')[0]} 100%)`;
@@ -63,13 +78,13 @@ function conicOf(stops: NonNullable<GaugeProps['ambient']>, matrix: GaugeProps['
  * LEDs show them, wrap the circle and diffuse inward; a thin light ring carries
  * the value.
  */
-export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, ambientHueLut, strokeScale = 1 }: GaugeProps) {
+export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, ambientHueLut, ambientGamma, strokeScale = 1 }: GaugeProps) {
   const clamped = Math.max(0, Math.min(100, value));
   const stroke = STROKE * strokeScale;
   const radius = GAUGE_FIGURE_OUTER - 7 - stroke / 2;
   const circumference = 2 * Math.PI * radius;
   const fill = (clamped / 100) * circumference;
-  const light: CSSProperties | undefined = ambient && ambient.length > 0 ? { backgroundImage: conicOf(ambient, ambientMatrix, ambientHueLut) } : undefined;
+  const light: CSSProperties | undefined = ambient && ambient.length > 0 ? { backgroundImage: conicOf(ambient, ambientMatrix, ambientHueLut, ambientGamma) } : undefined;
 
   return (
     <div className={styles.ambient}>

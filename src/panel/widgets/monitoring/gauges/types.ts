@@ -30,6 +30,8 @@ export interface GaugeProps {
   ambientMatrix?: readonly number[] | null;
   /** Hue correction pairs [LED hue, hue to send], applied to the ambient colours. */
   ambientHueLut?: readonly (readonly [number, number])[] | null;
+  /** LEDs light linearly with the value, the glass through its gamma: dim colours are lifted by value^(1/gamma). */
+  ambientGamma?: number | null;
 }
 
 export type GaugeDesignKey =

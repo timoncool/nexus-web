@@ -19,6 +19,8 @@ export interface SlotLighting {
   glowMatrix: readonly number[] | null;
   /** Camera-measured hue correction: pairs of [hue the LED shows, hue to send the screen], degrees, ascending. */
   glowHueLut: readonly (readonly [number, number])[] | null;
+  /** Value curve of the glow, 1 leaves dim colours as sent. */
+  glowGamma: number;
 }
 
 export const GLOW_MIN = 0.5;
@@ -27,6 +29,11 @@ export const GLOW_MAX = 2.5;
 const glowFactor = (value: unknown): number => {
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? Math.min(GLOW_MAX, Math.max(GLOW_MIN, n)) : 1;
+};
+
+const glowGamma = (value: unknown): number => {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.min(4, Math.max(1, n)) : 1;
 };
 
 /** Designs that draw the lighting pattern, the glow and the halo on their ring. */
@@ -60,6 +67,7 @@ export function readSlotLighting(config: Record<string, unknown> | undefined, sl
     glowSaturation: glowFactor(config?.[`slot${slot}_glowSaturation`]),
     glowMatrix: parseMatrix(config?.[`slot${slot}_glowMatrix`]),
     glowHueLut: parseHueLut(config?.[`slot${slot}_glowHueLut`]),
+    glowGamma: glowGamma(config?.[`slot${slot}_glowGamma`]),
   };
 }
 
