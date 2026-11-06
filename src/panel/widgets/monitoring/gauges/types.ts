@@ -36,6 +36,10 @@ export interface GaugeProps {
   ringInset?: number;
   /** Per-piece offset, scale and turn from the layout editor. */
   parts?: import('../slotParts').SlotParts;
+  /** HUD colours from the colour-wheel scheme over the live LED colour. */
+  hud?: import('../hudColors').HudColors;
+  /** Static glass effects: blur, glow, neon, glass, bevel... */
+  fx?: import('../hudEffects').HudEffects;
 }
 
 export type GaugeDesignKey =

@@ -18,8 +18,41 @@
   position: absolute;
   inset: -12%;
   background-image: radial-gradient(circle, var(--panel-accent) 0%, var(--panel-accent) 100%);
-  filter: blur(14px) brightness(var(--glow-brightness, 1)) saturate(var(--glow-saturation, 1));
+  filter: blur(var(--fx-blur, 14px)) brightness(var(--glow-brightness, 1)) saturate(var(--glow-saturation, 1));
+  opacity: var(--fx-light, 1);
   transform: scale(1.08);
+}
+
+.vignette,
+.glass,
+.bevel {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.vignette {
+  inset: 0;
+  background: radial-gradient(circle, transparent 45%, rgb(0 0 0 / calc(var(--fx-vignette, 0) * 0.75)) 100%);
+}
+
+.glass {
+  inset: 19%;
+  background: rgb(0 0 0 / calc(var(--fx-glass, 0) * 0.35));
+  backdrop-filter: blur(calc(var(--fx-glass, 0) * 10px));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / calc(var(--fx-glass, 0) * 0.18));
+}
+
+.bevel {
+  inset: 0;
+  background: radial-gradient(ellipse 60% 35% at 35% 22%, rgb(255 255 255 / calc(var(--fx-bevel, 0) * 0.3)), transparent 70%);
+  box-shadow:
+    inset calc(var(--fx-bevel, 0) * 1.6cqw) calc(var(--fx-bevel, 0) * 1.6cqw) calc(var(--fx-bevel, 0) * 3cqw) rgb(255 255 255 / calc(var(--fx-bevel, 0) * 0.35)),
+    inset calc(var(--fx-bevel, 0) * -1.6cqw) calc(var(--fx-bevel, 0) * -1.6cqw) calc(var(--fx-bevel, 0) * 3.5cqw) rgb(0 0 0 / calc(var(--fx-bevel, 0) * 0.55));
+}
+
+.hud {
+  opacity: var(--fx-hud, 1);
 }
 
 .svg {
@@ -36,12 +69,21 @@
 }
 
 .track {
-  stroke: rgb(255 255 255 / 16%);
+  stroke: var(--hud-track, #fff);
+  stroke-opacity: var(--fx-track, 0.16);
+}
+
+.sweepTrack {
+  opacity: var(--fx-track, 0.16);
+}
+
+.sweepFill {
+  filter: drop-shadow(0 0 calc(1.5px * var(--fx-ring-glow, 1)) rgb(255 255 255 / 60%));
 }
 
 .fill {
-  stroke: #fff;
-  filter: drop-shadow(0 0 1.5px rgb(255 255 255 / 90%));
+  stroke: var(--hud-ring, #fff);
+  filter: drop-shadow(0 0 calc(1.5px * var(--fx-ring-glow, 1)) var(--hud-ring, rgb(255 255 255 / 90%)));
   transition: stroke-dasharray 0.9s ease-out;
 
   @media (prefers-reduced-motion: reduce) {
@@ -68,8 +110,17 @@
   line-height: 1;
   text-box: trim-both cap alphabetic;
   max-width: 52cqw;
-  color: #fff;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 45%), 0 2px 14px rgb(0 0 0 / 50%);
+  color: var(--hud-value, #fff);
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / calc(0.45 * var(--fx-shade, 1))),
+    0 2px 14px rgb(0 0 0 / calc(0.5 * var(--fx-shade, 1))),
+    0 0 calc(0.12em * var(--fx-neon, 0)) currentColor,
+    0 0 calc(0.35em * var(--fx-neon, 0)) currentColor,
+    0 0 calc(0.7em * var(--fx-neon, 0)) currentColor,
+    -1px -1px 0 rgb(255 255 255 / calc(0.5 * var(--fx-emboss, 0))),
+    1px 1px 0 rgb(0 0 0 / calc(0.6 * var(--fx-emboss, 0)));
+  -webkit-text-stroke: var(--fx-stroke, 0px) rgb(0 0 0 / 65%);
+  paint-order: stroke fill;
 
   > span {
     position: relative;
@@ -97,13 +148,26 @@
   text-align: center;
   font-size: var(--type-gauge-caption);
   font-weight: var(--weight-strong);
-  color: rgb(255 255 255 / 90%);
+  color: var(--hud-label, rgb(255 255 255 / 90%));
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 45%), 0 1px 10px rgb(0 0 0 / 50%);
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / calc(0.45 * var(--fx-shade, 1))),
+    0 2px 14px rgb(0 0 0 / calc(0.5 * var(--fx-shade, 1))),
+    0 0 calc(0.12em * var(--fx-neon, 0)) currentColor,
+    0 0 calc(0.35em * var(--fx-neon, 0)) currentColor,
+    0 0 calc(0.7em * var(--fx-neon, 0)) currentColor,
+    -1px -1px 0 rgb(255 255 255 / calc(0.5 * var(--fx-emboss, 0))),
+    1px 1px 0 rgb(0 0 0 / calc(0.6 * var(--fx-emboss, 0)));
+  -webkit-text-stroke: var(--fx-stroke, 0px) rgb(0 0 0 / 65%);
+  paint-order: stroke fill;
 }
 
 .part {
   display: block;
   transform-origin: center;
+}
+
+.ambient[data-hud-unit] .value :global(.panel-gauge-unit) {
+  color: var(--hud-unit);
 }

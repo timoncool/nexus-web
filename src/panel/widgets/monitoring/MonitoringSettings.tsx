@@ -48,6 +48,7 @@ import { ChipGroup } from '../../../components/common/ChipGroup/ChipGroup';
 import { DesktopOnlyBadge } from '../../../components/common/DesktopOnlyBadge/DesktopOnlyBadge';
 import { SettingSlider } from '../../../components/common/SettingRow/SettingRow';
 import { LightingAccentSelect } from './LightingAccentSelect';
+import { HudSettings } from './HudSettings';
 import { GLOW_MAX, GLOW_MIN, RING_LIGHTING_DESIGNS, readSlotLighting } from './slotLighting';
 import { SLOT_SIZE_MAX, SLOT_SIZE_MIN, SLOT_SIZE_PARTS, STROKE_SCALE_DESIGNS, readSlotSizes } from './slotSizes';
 import styles from './MonitoringSettings.module.scss';
@@ -899,6 +900,7 @@ export function MonitoringSettings({ widget, surface, desktopEditor, onUpdate, s
               </>
             )}
           </SettingsSection>
+          {activeConfig.design === 'ambient' && <HudSettings config={widget.config} slot={activeSlot} onUpdate={onUpdate} />}
         </>
       )}
     </div>

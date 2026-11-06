@@ -28,6 +28,8 @@ import { usePanelGaugeGradient, type PanelGaugeGradientValue } from '../common/P
 import { remapGaugeGradientToDomain } from '../../theme/gaugeGradient';
 import { readRingInset, readSlotSizes, slotSizeVars, type SlotSizes } from './slotSizes';
 import { readSlotParts, type SlotParts } from './slotParts';
+import { hudColors, readHudSettings, type HudSettings } from './hudColors';
+import { readHudEffects, type HudEffects } from './hudEffects';
 import { RING_LIGHTING_DESIGNS, readSlotLighting, type SlotLighting } from './slotLighting';
 import { LightingBackdrop } from './LightingBackdrop';
 import { cycleEntryConfig, readSlotCycle, useSlotCycle, type SlotCycleEntry } from './slotCycle';
@@ -249,7 +251,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
 
   return (
     <div className={`${styles.performance} ${layoutClass}${fullBleed ? ` ${styles.fullBleed}` : ''}`}>
-      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, ringInset, parts, cycle, cycleHold }, i) => {
+      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, ringInset, parts, hud, fx, cycle, cycleHold }, i) => {
         const Slot = cycle ? CyclingPerfSlot : PerfSlot;
         return (
           <Slot
@@ -261,6 +263,8 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
             degreeOnly={degreeOnly}
             ringInset={ringInset}
             parts={parts}
+            hud={hud}
+            fx={fx}
             slotIndex={i}
             sensors={sensors}
             fpsSensors={fpsSensors}
@@ -313,6 +317,8 @@ function readSlotConfig(config: Record<string, unknown> | undefined, size: Widge
     sizes: readSlotSizes(config, i),
     ringInset: readRingInset(config, i),
     parts: readSlotParts(config, i),
+    hud: readHudSettings(config, i),
+    fx: readHudEffects(config, i),
     wholeNumbers: config?.[`slot${i}_wholeNumbers`] as boolean | undefined,
     lighting: readSlotLighting(config, i),
     hideUnit: config?.[`slot${i}_hideUnit`] === true,
@@ -349,6 +355,8 @@ interface PerfSlotProps {
   degreeOnly?: boolean;
   ringInset?: number;
   parts?: SlotParts;
+  hud?: HudSettings;
+  fx?: HudEffects;
   /** Readings shown in turn in place of device/sensor/caption. */
   cycle?: readonly SlotCycleEntry[];
   tempPrefs?: TempSensorPrefs;
@@ -362,7 +370,7 @@ function CyclingPerfSlot({ cycle, cycleHold, slotFor, ...props }: PerfSlotProps 
   return <PerfSlot {...props} {...slot} />;
 }
 
-export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, ringInset, parts, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
+export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, ringInset, parts, hud, fx, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
   const { monitoringTempUnit, numberFormat, monitoringWholeNumbers } = useUnitPrefs();
   const effectiveSensorName = device === 'network' && !sensorName ? NETWORK_SENSOR_TOTAL : sensorName;
   const sensor = resolveSensor(sensors, fpsSensors, networkSensors, device, effectiveSensorName, tempPrefs, extras);
@@ -431,6 +439,11 @@ export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extra
 
   const GaugeComponent = GAUGE_DESIGNS[design] ?? GAUGE_DESIGNS.sparkline;
 
+  const ledStops = gaugeGradient?.lightingStops ?? null;
+  const hudKey = hud ? JSON.stringify(hud) : '';
+  const glowBrightness = lighting?.glowBrightness ?? 1;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const hudColorsFor = useMemo(() => (hud ? hudColors(ledStops, hud, glowBrightness) : undefined), [ledStops, hudKey, glowBrightness]);
   const props: GaugeProps = {
     value,
     rawValue,
@@ -443,6 +456,8 @@ export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extra
     strokeScale: sizes?.strokeScale ?? 1,
     ringInset,
     parts,
+    hud: design === 'ambient' && hud ? hudColorsFor : undefined,
+    fx: design === 'ambient' ? fx : undefined,
     ringGlow: ringLit && lighting.ringGlow,
     halo: ringLit && lighting.haloRing,
     ambient: design === 'ambient' ? gaugeGradient?.lightingStops ?? null : null,

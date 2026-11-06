@@ -1,9 +1,11 @@
-import type { CSSProperties } from 'react';
+import { useId, type CSSProperties } from 'react';
 import { GaugeValue } from './GaugeValue';
 import { GAUGE_FIGURE_OUTER } from './types';
 import type { GaugeProps } from './types';
 import styles from './AmbientGauge.module.scss';
 import { partStyle, ringTransform } from '../slotParts';
+import { hudEffectVars } from '../hudEffects';
+import type { HudPaint } from '../hudColors';
 
 const STROKE = 3;
 
@@ -79,7 +81,15 @@ function conicOf(
  * LEDs show them, wrap the circle and diffuse inward; a thin light ring carries
  * the value.
  */
-export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, ambientHueLut, ambientGamma, strokeScale = 1, ringInset = 7, parts }: GaugeProps) {
+const sweepOf = (paint: HudPaint | undefined): string | null => {
+  if (!paint || !('sweep' in paint) || paint.sweep.length === 0) return null;
+  const parts = paint.sweep.map(s => `${s.color} ${(s.at * 100).toFixed(1)}%`);
+  return `conic-gradient(from 0deg, ${parts.join(', ')}, ${paint.sweep[0].color} 100%)`;
+};
+const colorOf = (paint: HudPaint | undefined): string | undefined => (paint && 'color' in paint ? paint.color : undefined);
+
+export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, ambientHueLut, ambientGamma, strokeScale = 1, ringInset = 7, parts, hud, fx }: GaugeProps) {
+  const id = useId().replace(/:/g, '');
   const clamped = Math.max(0, Math.min(100, value));
   const stroke = STROKE * strokeScale;
   const radius = GAUGE_FIGURE_OUTER - ringInset - stroke / 2;
@@ -87,24 +97,61 @@ export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, 
   const fill = (clamped / 100) * circumference;
   const light: CSSProperties | undefined = ambient && ambient.length > 0 ? { backgroundImage: conicOf(ambient, ambientMatrix, ambientHueLut, ambientGamma) } : undefined;
 
+  const ringSweep = sweepOf(hud?.ring);
+  const trackSweep = sweepOf(hud?.track);
+  const rootStyle = {
+    ...(fx ? hudEffectVars(fx) : undefined),
+    ...(colorOf(hud?.value) ? { '--hud-value': colorOf(hud?.value) } : undefined),
+    ...(colorOf(hud?.unit) ? { '--hud-unit': colorOf(hud?.unit) } : undefined),
+    ...(colorOf(hud?.label) ? { '--hud-label': colorOf(hud?.label) } : undefined),
+    ...(colorOf(hud?.ring) ? { '--hud-ring': colorOf(hud?.ring) } : undefined),
+    ...(colorOf(hud?.track) ? { '--hud-track': colorOf(hud?.track) } : undefined),
+  } as CSSProperties;
+  const trackCircle = <circle cx="50" cy="50" r={radius} className={styles.track} style={{ strokeWidth: stroke }} />;
+  const fillCircle = (
+    <circle
+      cx="50"
+      cy="50"
+      r={radius}
+      className={styles.fill}
+      style={{ strokeWidth: stroke }}
+      strokeDasharray={`${fill} ${circumference - fill}`}
+      transform="rotate(-90 50 50)"
+    />
+  );
+
   return (
-    <div className={styles.ambient}>
+    <div className={styles.ambient} style={rootStyle} data-hud-unit={colorOf(hud?.unit) ? '' : undefined}>
       <div className={styles.light} style={light} aria-hidden="true" />
+      <div className={styles.vignette} aria-hidden="true" />
+      <div className={styles.glass} aria-hidden="true" />
       <svg className={styles.svg} viewBox="0 0 100 100" aria-hidden="true">
-        <g data-gauge-part="ring" transform={ringTransform(parts?.ring)}>
-        <circle cx="50" cy="50" r={radius} className={styles.track} style={{ strokeWidth: stroke }} />
-        <circle
-          cx="50"
-          cy="50"
-          r={radius}
-          className={styles.fill}
-          style={{ strokeWidth: stroke }}
-          strokeDasharray={`${fill} ${circumference - fill}`}
-          transform="rotate(-90 50 50)"
-        />
+        {(ringSweep || trackSweep) && (
+          <defs>
+            {trackSweep && (
+              <mask id={`${id}-track`} maskUnits="userSpaceOnUse">
+                <circle cx="50" cy="50" r={radius} fill="none" stroke="#fff" strokeWidth={stroke} />
+              </mask>
+            )}
+            {ringSweep && (
+              <mask id={`${id}-fill`} maskUnits="userSpaceOnUse">
+                <circle cx="50" cy="50" r={radius} fill="none" stroke="#fff" strokeWidth={stroke} strokeLinecap="round"
+                  strokeDasharray={`${fill} ${circumference - fill}`} transform="rotate(-90 50 50)" />
+              </mask>
+            )}
+          </defs>
+        )}
+        <g data-gauge-part="ring" transform={ringTransform(parts?.ring)} className={styles.hud}>
+          {trackSweep
+            ? <foreignObject x="0" y="0" width="100" height="100" mask={`url(#${id}-track)`} className={styles.sweepTrack}><div style={{ width: '100%', height: '100%', backgroundImage: trackSweep }} /></foreignObject>
+            : trackCircle}
+          {ringSweep
+            ? <foreignObject x="0" y="0" width="100" height="100" mask={`url(#${id}-fill)`} className={styles.sweepFill}><div style={{ width: '100%', height: '100%', backgroundImage: ringSweep }} /></foreignObject>
+            : fillCircle}
         </g>
       </svg>
-      <div className={styles.center} style={parts?.unit ? { '--part-unit': partStyle(parts.unit) } as CSSProperties : undefined}>
+      <div className={styles.bevel} aria-hidden="true" />
+      <div className={`${styles.center} ${styles.hud}`} style={parts?.unit ? { '--part-unit': partStyle(parts.unit) } as CSSProperties : undefined}>
         <span className={styles.part} data-gauge-part="value" style={{ transform: partStyle(parts?.value) }}>
           <GaugeValue formatted={formatted} className={styles.value} />
         </span>
