@@ -209,6 +209,7 @@ export function buildPanelTheme(prefs: Preferences | null, record: PanelDeviceRe
     appAccentColor: t?.accentColor || DEFAULT_ACCENT,
     accentSyncWithDesktop: normalizePanelDesktopSync(r?.accentSyncWithDesktop),
     accentColor: r?.accentColor ?? '',
+    accentLightingDevice: r?.accentLightingDevice || null,
     backgroundColor: r?.backgroundColor ?? '',
     backgroundColorLight: r?.backgroundColorLight ?? '',
     backgroundMode: bgMode,
@@ -385,6 +386,11 @@ export function usePanelTheme(
     persistPatch({ accentColor: hex });
   }, [persistPatch]);
 
+  const commitAccentLightingDevice = useCallback((id: string | null) => {
+    setTheme(prev => ({ ...prev, accentLightingDevice: id }));
+    persistPatch({ accentLightingDevice: id ?? '' });
+  }, [persistPatch]);
+
   const commitBackground = useCallback((hex: string) => {
     // Set both slots from the same column so dark/light stay in the picked hue
     // family; custom hex uses the same value for both (no counterpart).
@@ -552,6 +558,7 @@ export function usePanelTheme(
     commitAccentSync,
     previewAccent: (hex: string) => setTheme(prev => ({ ...prev, accentColor: hex })),
     commitAccent,
+    commitAccentLightingDevice,
     previewBackground: (hex: string) => setTheme(prev => (
       resolvedModeRef.current === 'light'
         ? { ...prev, backgroundColorLight: hex }

@@ -134,6 +134,8 @@ export interface PanelDeviceRecord {
   font?: string;
   themeSyncWithDesktop?: boolean;
   accentSyncWithDesktop?: boolean;
+  // Lighting card id whose live LED colour is the accent; absent follows the accent settings.
+  accentLightingDevice?: string | null;
   // Device ids last selected on this panel's Lighting view; absent until set.
   lightingSelection?: string[];
   // Fan ids last selected on this panel's Cooling view; absent until set.
@@ -252,6 +254,8 @@ export interface PanelDevicePatch {
   font?: string;
   themeSyncWithDesktop?: boolean;
   accentSyncWithDesktop?: boolean;
+  // '' clears it.
+  accentLightingDevice?: string;
   // Full list (the client sends the whole selection); empty means none.
   lightingSelection?: string[];
   coolingSelection?: string[];

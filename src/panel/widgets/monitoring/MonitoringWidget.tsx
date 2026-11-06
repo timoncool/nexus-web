@@ -26,6 +26,7 @@ import { formatSensorValue } from './sensorValueFormat';
 import { chartDomainForScale, DEFAULT_SCALE_MODE, defaultFixedMax, designIsFill, fixedFillPercent, staticMaxForDevice, type ScaleMode } from './perfDomain';
 import { usePanelGaugeGradient, type PanelGaugeGradientValue } from '../common/PanelGaugeGradientContext';
 import { remapGaugeGradientToDomain } from '../../theme/gaugeGradient';
+import { readSlotSizes, slotSizeVars, type SlotSizes } from './slotSizes';
 import { defaultValueColorReverse, designSupportsValueColor, gaugeAccentVars, hasValueColorReading, reverseGaugeGradient, sensorSupportsValueColor } from './valueColor';
 import { accentShadowAlpha } from '../../../lib/settings';
 import styles from './MonitoringWidget.module.scss';
@@ -214,6 +215,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
     valueColorReverse: widget.config?.[`slot${i}_valueColorReverse`] as boolean | undefined,
     labelOverride: widget.config?.[`slot${i}_label`] as string | undefined,
     labelMode: widget.config?.[`slot${i}_labelMode`] as string | undefined,
+    sizes: readSlotSizes(widget.config, i),
   }));
   const microDevice = widget.config?.micro_device as DeviceKey | undefined;
   const usesFps = isMicro
@@ -257,7 +259,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
 
   return (
     <div className={`${styles.performance} ${layoutClass}${fullBleed ? ` ${styles.fullBleed}` : ''}`}>
-      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode }, i) => {
+      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes }, i) => {
         return (
           <PerfSlot
             key={`${i}-${device}-${sensorName}`}
@@ -277,6 +279,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
             gaugeGradient={gaugeGradient}
             labelOverride={labelOverride}
             labelMode={labelMode}
+            sizes={sizes}
             tempPrefs={tempPrefs}
             selected={selectable && i === activeSlot}
             onSelect={selectable ? () => onSelectSlot?.(i) : undefined}
@@ -306,12 +309,13 @@ interface PerfSlotProps {
   gaugeGradient?: PanelGaugeGradientValue;
   labelOverride?: string;
   labelMode?: string;
+  sizes?: SlotSizes;
   tempPrefs?: TempSensorPrefs;
   selected?: boolean;
   onSelect?: () => void;
 }
 
-export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
+export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
   const { monitoringTempUnit, numberFormat, monitoringWholeNumbers } = useUnitPrefs();
   const effectiveSensorName = device === 'network' && !sensorName ? NETWORK_SENSOR_TOTAL : sensorName;
   const sensor = resolveSensor(sensors, fpsSensors, networkSensors, device, effectiveSensorName, tempPrefs, extras);
@@ -385,7 +389,9 @@ export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extra
     maxValue,
     historyDomain,
     gradient,
+    strokeScale: sizes?.strokeScale ?? 1,
   };
+  const sizeStyle = sizes ? slotSizeVars(sizes) : undefined;
 
   // The tint rides on an inner layout-less wrapper so the slot's own chrome
   // (the editor's selection ring) keeps the panel accent.
@@ -394,13 +400,14 @@ export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extra
     : <GaugeComponent {...props} />;
 
   if (!onSelect) {
-    return <div className={styles.slot} data-monitoring-slot-index={slotIndex}>{content}</div>;
+    return <div className={styles.slot} style={sizeStyle} data-monitoring-slot-index={slotIndex}>{content}</div>;
   }
 
   return (
     <button
       type="button"
       data-monitoring-slot-index={slotIndex}
+      style={sizeStyle}
       className={`${styles.slot} ${styles.slotSelectable} ${selected ? styles.slotSelected : ''}`}
       aria-pressed={selected}
       aria-label={`Select ${resolvedLabel}`}

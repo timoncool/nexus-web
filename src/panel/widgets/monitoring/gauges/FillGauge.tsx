@@ -16,7 +16,7 @@ export function FillGauge({ value, formatted, label, gradient }: GaugeProps) {
       <div className={styles.bar} style={barStyle} />
       <div className={styles.info}>
         <GaugeValue formatted={formatted} className={styles.value} />
-        {label && <span className={styles.label}>{label}</span>}
+        {label && <span className={`${styles.label} panel-gauge-label`}>{label}</span>}
       </div>
     </div>
   );

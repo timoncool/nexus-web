@@ -83,6 +83,7 @@ import { WidgetContextMenu } from './widgets/common/WidgetContextMenu';
 import { useDeckInstance, DeckInstanceProvider } from './widgets/deck/useDeckInstance';
 import { innerGridForSize } from './widgets/deck/deckLayout';
 import { PanelGaugeGradientProvider, type PanelGaugeGradientValue } from './widgets/common/PanelGaugeGradientContext';
+import { useLightingAccent, withLightingAccent } from './theme/lightingAccent';
 import { PanelDeviceIdProvider } from './widgets/common/PanelDeviceIdContext';
 import { PanelImmersiveOpenProvider } from './widgets/common/PanelImmersiveContext';
 import { PanelOpenWidgetProvider } from './widgets/common/PanelOpenWidgetContext';
@@ -582,10 +583,11 @@ export function PanelContent({
   // resolveEffectivePanelTheme for what each surface forces.
   const baseTheme = simulator && simulatorTheme ? simulatorTheme : panelTheme.theme;
   const focusStaticMode = useFocusStaticBackground(surface, !simulator && !embedded);
+  const lightingAccent = useLightingAccent(embedded ? null : baseTheme.accentLightingDevice);
   const effectiveTheme = useMemo(() => {
-    const theme = resolveEffectivePanelTheme(baseTheme, surface);
+    const theme = withLightingAccent(resolveEffectivePanelTheme(baseTheme, surface), lightingAccent);
     return focusStaticMode ? withStaticBackground(theme) : theme;
-  }, [baseTheme, surface, focusStaticMode]);
+  }, [baseTheme, surface, focusStaticMode, lightingAccent]);
   usePanelLanguageSync(kioskBehavior, panelTheme.prefs);
   const effectiveThemeMode = effectiveTheme.themeSyncWithDesktop
     ? syncedAppThemeMode(effectiveTheme.appThemeMode, effectiveTheme.appResolvedThemeMode)
@@ -609,7 +611,9 @@ export function PanelContent({
     mode: resolvedThemeMode,
     preview: previewGaugeGradient,
     commit: commitGaugeGradient,
-  }), [gaugeSource, gaugeAccent, resolvedThemeMode, previewGaugeGradient, commitGaugeGradient]);
+    lightingDevice: embedded ? undefined : baseTheme.accentLightingDevice,
+    commitLightingDevice: embedded ? undefined : panelTheme.commitAccentLightingDevice,
+  }), [gaugeSource, gaugeAccent, resolvedThemeMode, previewGaugeGradient, commitGaugeGradient, embedded, baseTheme.accentLightingDevice, panelTheme.commitAccentLightingDevice]);
   // Standalone phone/kiosk owns the tab - mirror its resolved theme to <html>
   // so iOS Safari paints chrome (URL bar, overscroll, scrollbars) via the
   // matching color-scheme + <meta theme-color>. Skipped when embedded (the

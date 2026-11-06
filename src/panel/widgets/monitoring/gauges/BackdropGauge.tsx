@@ -29,7 +29,7 @@ export function BackdropGauge({ formatted, label, history, historyDomain, gradie
       </div>
       <div className={styles.overlay}>
         <GaugeValue formatted={formatted} className={styles.value} />
-        {label && <span className={styles.label}>{label}</span>}
+        {label && <span className={`${styles.label} panel-gauge-label`}>{label}</span>}
       </div>
     </div>
   );

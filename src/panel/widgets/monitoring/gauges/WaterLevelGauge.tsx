@@ -43,7 +43,7 @@ export function WaterLevelGauge({ value, formatted, label, gradient }: GaugeProp
       </div>
       <div className={styles.overlay}>
         <GaugeValue formatted={formatted} className={styles.value} />
-        {label && <span className={styles.label}>{label}</span>}
+        {label && <span className={`${styles.label} panel-gauge-label`}>{label}</span>}
       </div>
     </div>
   );

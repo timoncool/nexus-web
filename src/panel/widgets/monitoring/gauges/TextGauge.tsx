@@ -6,7 +6,7 @@ export function TextGauge({ formatted, label }: GaugeProps) {
   return (
     <div className={styles.text}>
       <GaugeValue formatted={formatted} className={styles.value} />
-      {label && <span className={styles.label}>{label}</span>}
+      {label && <span className={`${styles.label} panel-gauge-label`}>{label}</span>}
     </div>
   );
 }

@@ -17,6 +17,8 @@ export interface GaugeProps {
   historyDomain: [number, number];
   /** Value-colour ramp positioned on this gauge's own scale; null when off. */
   gradient?: GaugeGradient | null;
+  /** Ring line weight relative to the design's own; the ring designs read it, the rest ignore it. */
+  strokeScale?: number;
 }
 
 export type GaugeDesignKey =

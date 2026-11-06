@@ -20,6 +20,9 @@ export interface PanelGaugeGradientValue {
   preview: (stops: readonly GaugeGradientStop[]) => void;
   /** Persist to this panel's record. */
   commit: (stops: readonly GaugeGradientStop[]) => void;
+  /** Lighting card whose live colour is the panel accent; undefined where the host has no panel record. */
+  lightingDevice?: string | null;
+  commitLightingDevice?: (id: string | null) => void;
 }
 
 const NOOP = () => {};

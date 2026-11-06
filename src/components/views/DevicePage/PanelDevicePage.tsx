@@ -11,6 +11,7 @@ import { previewFit } from '../../../panel/widgets/common/widgetPreviewFit';
 import { SIZE_ICONS } from '../../../panel/widgets/common/SizeIcons';
 import { WidgetControlGroup } from '../../../panel/widgets/common/WidgetControlGroup';
 import { PanelGaugeGradientProvider, type PanelGaugeGradientValue } from '../../../panel/widgets/common/PanelGaugeGradientContext';
+import { useLightingAccent, withLightingAccent } from '../../../panel/theme/lightingAccent';
 import { slotLayoutLabelKey, slotLayoutOptionsForSize, slotLayoutPatch, resolvedSlotLayout, slotLayoutKey, type SlotLayout } from '../../../panel/widgets/monitoring/perfSlots';
 import { SlotLayoutIcon } from '../../../panel/widgets/monitoring/SlotCountIcons';
 import {
@@ -666,6 +667,7 @@ export function PanelDevicePage({ device, platform = '', onOpenFirmware, onSecti
   const panelRecord = usePanelRecord(editingDeviceId);
   const panelTheme = usePanelTheme(panelRecord, editingDeviceId);
   const theme = panelTheme.theme;
+  const lightingAccent = useLightingAccent(theme.accentLightingDevice);
   const widgetSizeStops = useMemo(() => {
     const options = panelWidgetSizeOptions(glassSurface, recordFamily);
     return options ? widgetSizeStops_(options, densitySlots) : [];
@@ -680,7 +682,7 @@ export function PanelDevicePage({ device, platform = '', onOpenFirmware, onSecti
   const resolvedPanelThemeMode = useResolvedPanelThemeMode(effectiveThemeMode);
   // The monitoring settings pane edits the panel's gauge gradient in place; the
   // simulator iframe repaints from the same theme via the postMessage sync.
-  const gaugeAccent = panelAccentColor(theme);
+  const gaugeAccent = panelAccentColor(withLightingAccent(theme, lightingAccent));
   const gaugeGradientValue = useMemo<PanelGaugeGradientValue>(() => ({
     stops: resolveGaugeGradient(theme.gaugeGradient, gaugeAccent),
     source: theme.gaugeGradient,
@@ -688,7 +690,9 @@ export function PanelDevicePage({ device, platform = '', onOpenFirmware, onSecti
     mode: resolvedPanelThemeMode,
     preview: panelTheme.previewGaugeGradient,
     commit: panelTheme.commitGaugeGradient,
-  }), [theme.gaugeGradient, gaugeAccent, resolvedPanelThemeMode, panelTheme.previewGaugeGradient, panelTheme.commitGaugeGradient]);
+    lightingDevice: theme.accentLightingDevice,
+    commitLightingDevice: panelTheme.commitAccentLightingDevice,
+  }), [theme.gaugeGradient, gaugeAccent, resolvedPanelThemeMode, panelTheme.previewGaugeGradient, panelTheme.commitGaugeGradient, theme.accentLightingDevice, panelTheme.commitAccentLightingDevice]);
   // Desktop resolved mode from the app theme (concrete dark/light, not 'system').
   // Used for the widget preview in InlineWidgetSettings so it inherits the
   // desktop chrome's active theme instead of the panel theme.
@@ -697,7 +701,7 @@ export function PanelDevicePage({ device, platform = '', onOpenFirmware, onSecti
   // where --accent is the desktop app's, not this panel's. Inject the panel's
   // accent vars (at the preview's own resolved mode) so previews highlight in
   // the panel's hue instead of the desktop default.
-  const panelPreviewThemeStyle = buildPanelThemeVars(theme, desktopResolvedThemeMode);
+  const panelPreviewThemeStyle = buildPanelThemeVars(withLightingAccent(theme, lightingAccent), desktopResolvedThemeMode);
 
   useEffect(() => {
     if (!open) return;

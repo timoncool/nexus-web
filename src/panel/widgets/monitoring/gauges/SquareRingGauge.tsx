@@ -108,7 +108,7 @@ export function SquareRingGauge({ value, formatted, label, gradient }: GaugeProp
       </svg>
       <div className={styles.center}>
         <GaugeValue formatted={formatted} className={styles.value} />
-        {label && <span className={styles.label}>{label}</span>}
+        {label && <span className={`${styles.label} panel-gauge-label`}>{label}</span>}
       </div>
     </div>
   );

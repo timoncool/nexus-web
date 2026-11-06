@@ -40,7 +40,7 @@ export function TickRingGauge({ value, formatted, label, gradient }: GaugeProps)
       </svg>
       <div className={styles.center}>
         <GaugeValue formatted={formatted} className={styles.value} />
-        {label && <span className={styles.label}>{label}</span>}
+        {label && <span className={`${styles.label} panel-gauge-label`}>{label}</span>}
       </div>
     </div>
   );

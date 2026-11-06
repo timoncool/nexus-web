@@ -284,11 +284,15 @@
 .panel-gauge-unit {
   display: inline-block;
   margin-left: 0.18em;
-  font-size: 0.55em;
+  font-size: calc(0.55em * var(--mon-unit-scale, 1));
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--text-dim);
   vertical-align: baseline;
+}
+
+.panel-gauge-label {
+  zoom: var(--mon-label-scale, 1);
 }
 
 .panel-card {

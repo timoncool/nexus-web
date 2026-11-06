@@ -64,6 +64,8 @@ export interface PanelThemeSettingsState {
   appAccentColor: string;
   accentSyncWithDesktop: boolean;
   accentColor: string;
+  // Lighting card id whose live LED colour replaces the accent; null when off.
+  accentLightingDevice: string | null;
   backgroundColor: string;
   backgroundColorLight: string;
   backgroundMode: PanelBackgroundMode;

@@ -12,4 +12,5 @@
 // the value+unit line unbreakable whatever the cell width.
 .line {
   white-space: nowrap;
+  font-size: calc(var(--mon-value-scale, 1) * 1em);
 }

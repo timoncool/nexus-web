@@ -40,7 +40,7 @@ export function HeatmapGauge({ formatted, label, history, historyDomain, gradien
       </div>
       <div className={styles.info}>
         <GaugeValue formatted={formatted} className={styles.value} />
-        {label && <span className={styles.label}>{label}</span>}
+        {label && <span className={`${styles.label} panel-gauge-label`}>{label}</span>}
       </div>
     </div>
   );

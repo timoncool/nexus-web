@@ -46,6 +46,9 @@ import {
 import { SettingsSection, SettingsRow, SettingsToggle, SettingsButton } from '../common/SettingsRow/SettingsRow';
 import { ChipGroup } from '../../../components/common/ChipGroup/ChipGroup';
 import { DesktopOnlyBadge } from '../../../components/common/DesktopOnlyBadge/DesktopOnlyBadge';
+import { SettingSlider } from '../../../components/common/SettingRow/SettingRow';
+import { LightingAccentSelect } from './LightingAccentSelect';
+import { SLOT_SIZE_MAX, SLOT_SIZE_MIN, SLOT_SIZE_PARTS, STROKE_SCALE_DESIGNS, readSlotSizes } from './slotSizes';
 import styles from './MonitoringSettings.module.scss';
 
 // The panel-wide gauge gradient, edited from whichever monitoring widget has
@@ -653,6 +656,7 @@ export function MonitoringSettings({ widget, surface, desktopEditor, onUpdate, s
   const slotValueColorReverse = (widget.config?.[`slot${activeSlot}_valueColorReverse`] as boolean | undefined)
     ?? (activeConfig ? defaultValueColorReverse(activeConfig.device, activeSensor?.name ?? activeConfig.sensorName) : false);
   const slotLabelMode = (widget.config?.[`slot${activeSlot}_labelMode`] as string | undefined) ?? 'auto';
+  const slotSizes = readSlotSizes(widget.config, activeSlot);
   const slotLabelOverride = (widget.config?.[`slot${activeSlot}_label`] as string | undefined) ?? '';
   const slotAutoLabel = activeConfig ? labelForDevice(activeConfig.device, sensorCaptionName(activeConfig.device, sensors, activeSensor) ?? activeConfig.sensorName) : '';
 
@@ -759,26 +763,47 @@ export function MonitoringSettings({ widget, surface, desktopEditor, onUpdate, s
             </SettingsSection>
           )}
 
-          {sensorSupportsValueColor(activeSensor?.type, activeConfig.device) && designSupportsValueColor(activeConfig.design) && (
-            <SettingsSection title={t('monitoring.settings.colors')}>
-              <SettingsToggle
-                label={t('monitoring.settings.valueColor')}
-                description={t('monitoring.settings.valueColorHint')}
-                checked={slotValueColor}
-                onChange={next => onUpdate({ [`slot${activeSlot}_valueColor`]: next })}
+          <SettingsSection title={t('monitoring.settings.sizes')}>
+            {SLOT_SIZE_PARTS.filter(part => part !== 'strokeScale' || STROKE_SCALE_DESIGNS.has(activeConfig.design)).map(part => (
+              <SettingSlider
+                key={part}
+                editable
+                trackFill
+                label={t(`monitoring.settings.size.${part}`)}
+                value={Math.round(slotSizes[part] * 100)}
+                min={SLOT_SIZE_MIN * 100}
+                max={SLOT_SIZE_MAX * 100}
+                step={5}
+                formatValue={v => `${v}%`}
+                onChange={(v, commit) => { if (commit) onUpdate({ [`slot${activeSlot}_${part}`]: v === 100 ? null : v / 100 }); }}
+                onCommit={v => onUpdate({ [`slot${activeSlot}_${part}`]: v === 100 ? null : v / 100 })}
               />
-              {slotValueColor && (
-                <>
-                  <SettingsToggle
-                    label={t('monitoring.settings.valueColorReverse')}
-                    checked={slotValueColorReverse}
-                    onChange={next => onUpdate({ [`slot${activeSlot}_valueColorReverse`]: next })}
-                  />
-                  <GaugeGradientSection />
-                </>
-              )}
-            </SettingsSection>
-          )}
+            ))}
+          </SettingsSection>
+
+          <SettingsSection title={t('monitoring.settings.colors')}>
+            <LightingAccentSelect />
+            {sensorSupportsValueColor(activeSensor?.type, activeConfig.device) && designSupportsValueColor(activeConfig.design) && (
+              <>
+                <SettingsToggle
+                  label={t('monitoring.settings.valueColor')}
+                  description={t('monitoring.settings.valueColorHint')}
+                  checked={slotValueColor}
+                  onChange={next => onUpdate({ [`slot${activeSlot}_valueColor`]: next })}
+                />
+                {slotValueColor && (
+                  <>
+                    <SettingsToggle
+                      label={t('monitoring.settings.valueColorReverse')}
+                      checked={slotValueColorReverse}
+                      onChange={next => onUpdate({ [`slot${activeSlot}_valueColorReverse`]: next })}
+                    />
+                    <GaugeGradientSection />
+                  </>
+                )}
+              </>
+            )}
+          </SettingsSection>
         </>
       )}
     </div>

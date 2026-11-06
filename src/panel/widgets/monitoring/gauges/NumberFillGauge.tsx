@@ -25,7 +25,7 @@ export function NumberFillGauge({ value, formatted, label, gradient }: GaugeProp
           />
         </span>
       </div>
-      {label && <span className={styles.label}>{label}</span>}
+      {label && <span className={`${styles.label} panel-gauge-label`}>{label}</span>}
     </div>
   );
 }
