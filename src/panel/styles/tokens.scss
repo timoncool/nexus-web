@@ -295,6 +295,18 @@
   zoom: var(--mon-label-scale, 1);
 }
 
+[data-text-lighting] .panel-gauge-value,
+[data-text-lighting='all'] .panel-gauge-unit,
+[data-text-lighting='all'] .panel-gauge-label {
+  color: var(--panel-accent);
+  transition: color 0.4s linear;
+}
+
+[data-text-glow] .panel-gauge-value,
+[data-text-glow='all'] .panel-gauge-label {
+  text-shadow: 0 0 0.18em var(--panel-accent), 0 0 0.55em var(--panel-accent);
+}
+
 .panel-card {
   background-color: color-mix(in srgb, var(--panel-card-fill) var(--panel-card-bg-opacity, 100%), transparent);
   // Border fades with the user's widget opacity slider so a 0% widget has zero

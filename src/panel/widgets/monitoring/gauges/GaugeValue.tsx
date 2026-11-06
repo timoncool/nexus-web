@@ -30,7 +30,7 @@ export function GaugeValue({ formatted, className, clipTopPercent, textFill, ali
   return (
     <span
       ref={boxRef}
-      className={`${styles.fitBox}${className ? ` ${className}` : ''}`}
+      className={`${styles.fitBox} panel-gauge-value${className ? ` ${className}` : ''}`}
       role="img"
       aria-label={formatted}
       style={align ? { justifyContent: ALIGN_JUSTIFY[align] } : undefined}

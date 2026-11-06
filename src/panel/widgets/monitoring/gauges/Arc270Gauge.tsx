@@ -2,6 +2,8 @@ import { ArcSegments, type ArcGeometry } from './ArcSegments';
 import { GaugeValue } from './GaugeValue';
 import { GAUGE_FIGURE_OUTER } from './types';
 import type { GaugeProps } from './types';
+import { useId } from 'react';
+import { HaloRing, RingGlowFilter } from './RingGlow';
 import styles from './Arc270Gauge.module.scss';
 
 const STROKE = 9;
@@ -32,7 +34,8 @@ function arcGeometry(strokeScale: number) {
 
 const DEFAULT_ARC = arcGeometry(1);
 
-export function Arc270Gauge({ value, formatted, label, gradient, strokeScale = 1 }: GaugeProps) {
+export function Arc270Gauge({ value, formatted, label, gradient, strokeScale = 1, ringGlow, halo }: GaugeProps) {
+  const glowId = useId();
   const arc = strokeScale === 1 ? DEFAULT_ARC : arcGeometry(strokeScale);
   const clamped = Math.max(0, Math.min(100, value));
   const fillLength = (clamped / 100) * arc.length;
@@ -41,21 +44,25 @@ export function Arc270Gauge({ value, formatted, label, gradient, strokeScale = 1
   return (
     <div className={styles.arc270}>
       <svg className={styles.svg} viewBox="0 0 100 100">
+        {ringGlow && <RingGlowFilter id={glowId} />}
         <path d={arc.path} className={styles.trackArc} style={{ strokeWidth: arc.stroke }} />
-        {gradient ? (
-          <ArcSegments
-            geometry={arc.geometry}
-            gradient={gradient}
-            fillPercent={clamped}
-          />
-        ) : (
-          <path
-            d={arc.path}
-            className={styles.fillArc}
-            style={{ strokeWidth: arc.stroke }}
-            strokeDasharray={`${fillLength} ${gapLength}`}
-          />
-        )}
+        <g filter={ringGlow ? `url(#${glowId})` : undefined}>
+          {halo && <HaloRing geometry={arc.geometry} gradient={gradient} className={styles.fillArc} />}
+          {gradient ? (
+            <ArcSegments
+              geometry={arc.geometry}
+              gradient={gradient}
+              fillPercent={clamped}
+            />
+          ) : (
+            <path
+              d={arc.path}
+              className={styles.fillArc}
+              style={{ strokeWidth: arc.stroke }}
+              strokeDasharray={`${fillLength} ${gapLength}`}
+            />
+          )}
+        </g>
       </svg>
       <div className={styles.center}>
         <GaugeValue formatted={formatted} className={styles.value} />

@@ -27,6 +27,8 @@ import { chartDomainForScale, DEFAULT_SCALE_MODE, defaultFixedMax, designIsFill,
 import { usePanelGaugeGradient, type PanelGaugeGradientValue } from '../common/PanelGaugeGradientContext';
 import { remapGaugeGradientToDomain } from '../../theme/gaugeGradient';
 import { readSlotSizes, slotSizeVars, type SlotSizes } from './slotSizes';
+import { RING_LIGHTING_DESIGNS, readSlotLighting, type SlotLighting } from './slotLighting';
+import { LightingBackdrop } from './LightingBackdrop';
 import { defaultValueColorReverse, designSupportsValueColor, gaugeAccentVars, hasValueColorReading, reverseGaugeGradient, sensorSupportsValueColor } from './valueColor';
 import { accentShadowAlpha } from '../../../lib/settings';
 import styles from './MonitoringWidget.module.scss';
@@ -217,6 +219,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
     labelMode: widget.config?.[`slot${i}_labelMode`] as string | undefined,
     sizes: readSlotSizes(widget.config, i),
     wholeNumbers: widget.config?.[`slot${i}_wholeNumbers`] as boolean | undefined,
+    lighting: readSlotLighting(widget.config, i),
   }));
   const microDevice = widget.config?.micro_device as DeviceKey | undefined;
   const usesFps = isMicro
@@ -260,7 +263,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
 
   return (
     <div className={`${styles.performance} ${layoutClass}${fullBleed ? ` ${styles.fullBleed}` : ''}`}>
-      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes, wholeNumbers }, i) => {
+      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes, wholeNumbers, lighting }, i) => {
         return (
           <PerfSlot
             key={`${i}-${device}-${sensorName}`}
@@ -282,6 +285,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
             labelMode={labelMode}
             sizes={sizes}
             wholeNumbers={wholeNumbers}
+            lighting={lighting}
             tempPrefs={tempPrefs}
             selected={selectable && i === activeSlot}
             onSelect={selectable ? () => onSelectSlot?.(i) : undefined}
@@ -314,12 +318,13 @@ interface PerfSlotProps {
   sizes?: SlotSizes;
   /** Rounds this slot's reading; unset follows the app-wide whole-numbers preference. */
   wholeNumbers?: boolean;
+  lighting?: SlotLighting;
   tempPrefs?: TempSensorPrefs;
   selected?: boolean;
   onSelect?: () => void;
 }
 
-export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
+export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, lighting, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
   const { monitoringTempUnit, numberFormat, monitoringWholeNumbers } = useUnitPrefs();
   const effectiveSensorName = device === 'network' && !sensorName ? NETWORK_SENSOR_TOTAL : sensorName;
   const sensor = resolveSensor(sensors, fpsSensors, networkSensors, device, effectiveSensorName, tempPrefs, extras);
@@ -367,7 +372,10 @@ export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extra
   const stops = useMemo(() => (panelStops && reverse ? reverseGaugeGradient(panelStops) : panelStops), [panelStops, reverse]);
   const mode = gaugeGradient?.mode ?? 'dark';
   const chart = !designIsFill(design);
+  const ringLit = !!lighting && RING_LIGHTING_DESIGNS.has(design);
+  const patternStops = ringLit && lighting.ringStyle === 'pattern' ? gaugeGradient?.lightingStops ?? null : null;
   const gradient = useMemo(() => {
+    if (patternStops) return { id: gradientId, stops: patternStops, bodyAlpha: accentShadowAlpha(mode) };
     if (!stops) return null;
     const bodyAlpha = accentShadowAlpha(mode);
     if (!chart) return { id: gradientId, stops, bodyAlpha };
@@ -375,10 +383,10 @@ export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extra
       ? (at: number) => domainMin + at * (domainMax - domainMin)
       : (at: number) => at * maxValue;
     return { id: gradientId, stops: remapGaugeGradientToDomain(stops, valueAt, domainMin, domainMax), bodyAlpha };
-  }, [gradientId, stops, mode, chart, scale, domainMin, domainMax, maxValue]);
+  }, [gradientId, stops, mode, chart, scale, domainMin, domainMax, maxValue, patternStops]);
   // Tints the number and glow to the reading; the figure carries the whole
   // gradient, so the two together read like a tachometer.
-  const gradeStyle = stops
+  const gradeStyle = stops && !patternStops
     ? gaugeAccentVars(stops, scaleFraction, mode) as CSSProperties
     : undefined;
 
@@ -394,17 +402,27 @@ export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extra
     historyDomain,
     gradient,
     strokeScale: sizes?.strokeScale ?? 1,
+    ringGlow: ringLit && lighting.ringGlow,
+    halo: ringLit && lighting.haloRing,
   };
   const sizeStyle = sizes ? slotSizeVars(sizes) : undefined;
+  const lightingAttrs = lighting ? {
+    'data-text-lighting': lighting.textColor === 'off' ? undefined : lighting.textColor,
+    'data-text-glow': lighting.textGlow === 'off' ? undefined : lighting.textGlow,
+  } : undefined;
+  const backdropSpec = lighting && lighting.backdrop > 0 ? gaugeGradient?.lightingDevice ?? null : null;
 
   // The tint rides on an inner layout-less wrapper so the slot's own chrome
   // (the editor's selection ring) keeps the panel accent.
-  const content = gradeStyle
+  const gauge = gradeStyle
     ? <div className={styles.slotPaint} style={gradeStyle}><GaugeComponent {...props} /></div>
     : <GaugeComponent {...props} />;
+  const content = backdropSpec
+    ? <div className={styles.slotLit}><LightingBackdrop spec={backdropSpec} opacity={lighting?.backdrop ?? 0} />{gauge}</div>
+    : gauge;
 
   if (!onSelect) {
-    return <div className={styles.slot} style={sizeStyle} data-monitoring-slot-index={slotIndex}>{content}</div>;
+    return <div className={styles.slot} style={sizeStyle} {...lightingAttrs} data-monitoring-slot-index={slotIndex}>{content}</div>;
   }
 
   return (
@@ -412,6 +430,7 @@ export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extra
       type="button"
       data-monitoring-slot-index={slotIndex}
       style={sizeStyle}
+      {...lightingAttrs}
       className={`${styles.slot} ${styles.slotSelectable} ${selected ? styles.slotSelected : ''}`}
       aria-pressed={selected}
       aria-label={`Select ${resolvedLabel}`}

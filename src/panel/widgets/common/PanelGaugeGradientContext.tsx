@@ -23,6 +23,8 @@ export interface PanelGaugeGradientValue {
   /** Lighting card whose live colour is the panel accent; undefined where the host has no panel record. */
   lightingDevice?: string | null;
   commitLightingDevice?: (id: string | null) => void;
+  /** That card's LEDs as live stops in strip order; null until a frame arrives or with no card. */
+  lightingStops?: readonly GaugeGradientStop[] | null;
 }
 
 const NOOP = () => {};

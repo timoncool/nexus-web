@@ -43,11 +43,12 @@ import { bottomLabelForDevice } from '../monitoring/MicroMonitoringWidget';
 import {
   CATEGORY_LABEL_KEYS, DEVICE_OPTION_KEYS, selectedSensorValue, sensorsForDevice, visibleDeviceKeys,
 } from '../monitoring/sensorPicker';
-import { SettingsSection, SettingsRow, SettingsToggle, SettingsButton } from '../common/SettingsRow/SettingsRow';
+import { SettingsSection, SettingsRow, SettingsToggle, SettingsButton, SettingsSelect } from '../common/SettingsRow/SettingsRow';
 import { ChipGroup } from '../../../components/common/ChipGroup/ChipGroup';
 import { DesktopOnlyBadge } from '../../../components/common/DesktopOnlyBadge/DesktopOnlyBadge';
 import { SettingSlider } from '../../../components/common/SettingRow/SettingRow';
 import { LightingAccentSelect } from './LightingAccentSelect';
+import { RING_LIGHTING_DESIGNS, readSlotLighting } from './slotLighting';
 import { SLOT_SIZE_MAX, SLOT_SIZE_MIN, SLOT_SIZE_PARTS, STROKE_SCALE_DESIGNS, readSlotSizes } from './slotSizes';
 import styles from './MonitoringSettings.module.scss';
 
@@ -330,6 +331,7 @@ export function LabelControls({
 
 export function MonitoringSettings({ widget, surface, desktopEditor, onUpdate, selectedSlot = 0, onSelectedSlotChange }: WidgetSettingsProps) {
   const { t } = useTranslation();
+  const gaugeGradient = usePanelGaugeGradient();
   const sensors = useSensors(true);
   const layout = resolvedSlotLayout(widget.size, widget.config);
   const count = layout.count;
@@ -657,6 +659,13 @@ export function MonitoringSettings({ widget, surface, desktopEditor, onUpdate, s
     ?? (activeConfig ? defaultValueColorReverse(activeConfig.device, activeSensor?.name ?? activeConfig.sensorName) : false);
   const slotLabelMode = (widget.config?.[`slot${activeSlot}_labelMode`] as string | undefined) ?? 'auto';
   const slotSizes = readSlotSizes(widget.config, activeSlot);
+  const slotLighting = readSlotLighting(widget.config, activeSlot);
+  const { lightingDevice } = gaugeGradient;
+  const textReachOptions = [
+    { value: 'off', label: t('monitoring.settings.textReach.off') },
+    { value: 'value', label: t('monitoring.settings.textReach.value') },
+    { value: 'all', label: t('monitoring.settings.textReach.all') },
+  ];
   const slotLabelOverride = (widget.config?.[`slot${activeSlot}_label`] as string | undefined) ?? '';
   const slotAutoLabel = activeConfig ? labelForDevice(activeConfig.device, sensorCaptionName(activeConfig.device, sensors, activeSensor) ?? activeConfig.sensorName) : '';
 
@@ -788,6 +797,59 @@ export function MonitoringSettings({ widget, surface, desktopEditor, onUpdate, s
 
           <SettingsSection title={t('monitoring.settings.colors')}>
             <LightingAccentSelect />
+            {lightingDevice && (
+              <>
+                {RING_LIGHTING_DESIGNS.has(activeConfig.design) && (
+                  <>
+                    <SettingsSelect
+                      label={t('monitoring.settings.ringStyle')}
+                      value={slotLighting.ringStyle}
+                      options={[
+                        { value: 'accent', label: t('monitoring.settings.ringStyle.accent') },
+                        { value: 'pattern', label: t('monitoring.settings.ringStyle.pattern') },
+                      ]}
+                      onChange={v => onUpdate({ [`slot${activeSlot}_ringStyle`]: v === 'accent' ? null : v })}
+                    />
+                    <SettingsToggle
+                      label={t('monitoring.settings.ringGlow')}
+                      checked={slotLighting.ringGlow}
+                      onChange={next => onUpdate({ [`slot${activeSlot}_ringGlow`]: next ? true : null })}
+                    />
+                    <SettingsToggle
+                      label={t('monitoring.settings.haloRing')}
+                      checked={slotLighting.haloRing}
+                      onChange={next => onUpdate({ [`slot${activeSlot}_haloRing`]: next ? true : null })}
+                    />
+                  </>
+                )}
+                <SettingsSelect
+                  label={t('monitoring.settings.textColor')}
+                  value={slotLighting.textColor}
+                  options={textReachOptions}
+                  onChange={v => onUpdate({ [`slot${activeSlot}_textColor`]: v === 'off' ? null : v })}
+                />
+                <SettingsSelect
+                  label={t('monitoring.settings.textGlow')}
+                  value={slotLighting.textGlow}
+                  options={textReachOptions}
+                  onChange={v => onUpdate({ [`slot${activeSlot}_textGlow`]: v === 'off' ? null : v })}
+                />
+                <SettingSlider
+                  editable
+                  trackFill
+                  label={t('monitoring.settings.backdrop')}
+                  description={t('monitoring.settings.backdropHint')}
+                  descriptionBelow
+                  value={Math.round(slotLighting.backdrop * 100)}
+                  min={0}
+                  max={100}
+                  step={5}
+                  formatValue={v => `${v}%`}
+                  onChange={(v, commit) => { if (commit) onUpdate({ [`slot${activeSlot}_backdrop`]: v === 0 ? null : v / 100 }); }}
+                  onCommit={v => onUpdate({ [`slot${activeSlot}_backdrop`]: v === 0 ? null : v / 100 })}
+                />
+              </>
+            )}
             {sensorSupportsValueColor(activeSensor?.type, activeConfig.device) && designSupportsValueColor(activeConfig.design) && (
               <>
                 <SettingsToggle

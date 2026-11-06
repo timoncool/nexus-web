@@ -11,7 +11,7 @@ import { previewFit } from '../../../panel/widgets/common/widgetPreviewFit';
 import { SIZE_ICONS } from '../../../panel/widgets/common/SizeIcons';
 import { WidgetControlGroup } from '../../../panel/widgets/common/WidgetControlGroup';
 import { PanelGaugeGradientProvider, type PanelGaugeGradientValue } from '../../../panel/widgets/common/PanelGaugeGradientContext';
-import { useLightingAccent, withLightingAccent } from '../../../panel/theme/lightingAccent';
+import { useLightingLive, withLightingAccent } from '../../../panel/theme/lightingAccent';
 import { slotLayoutLabelKey, slotLayoutOptionsForSize, slotLayoutPatch, resolvedSlotLayout, slotLayoutKey, type SlotLayout } from '../../../panel/widgets/monitoring/perfSlots';
 import { SlotLayoutIcon } from '../../../panel/widgets/monitoring/SlotCountIcons';
 import {
@@ -667,7 +667,8 @@ export function PanelDevicePage({ device, platform = '', onOpenFirmware, onSecti
   const panelRecord = usePanelRecord(editingDeviceId);
   const panelTheme = usePanelTheme(panelRecord, editingDeviceId);
   const theme = panelTheme.theme;
-  const lightingAccent = useLightingAccent(theme.accentLightingDevice);
+  const lightingLive = useLightingLive(theme.accentLightingDevice);
+  const lightingAccent = lightingLive.accent;
   const widgetSizeStops = useMemo(() => {
     const options = panelWidgetSizeOptions(glassSurface, recordFamily);
     return options ? widgetSizeStops_(options, densitySlots) : [];
@@ -692,7 +693,8 @@ export function PanelDevicePage({ device, platform = '', onOpenFirmware, onSecti
     commit: panelTheme.commitGaugeGradient,
     lightingDevice: theme.accentLightingDevice,
     commitLightingDevice: panelTheme.commitAccentLightingDevice,
-  }), [theme.gaugeGradient, gaugeAccent, resolvedPanelThemeMode, panelTheme.previewGaugeGradient, panelTheme.commitGaugeGradient, theme.accentLightingDevice, panelTheme.commitAccentLightingDevice]);
+    lightingStops: lightingLive.stops,
+  }), [theme.gaugeGradient, gaugeAccent, resolvedPanelThemeMode, panelTheme.previewGaugeGradient, panelTheme.commitGaugeGradient, theme.accentLightingDevice, panelTheme.commitAccentLightingDevice, lightingLive.stops]);
   // Desktop resolved mode from the app theme (concrete dark/light, not 'system').
   // Used for the widget preview in InlineWidgetSettings so it inherits the
   // desktop chrome's active theme instead of the panel theme.

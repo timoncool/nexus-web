@@ -19,6 +19,10 @@ export interface GaugeProps {
   gradient?: GaugeGradient | null;
   /** Ring line weight relative to the design's own; the ring designs read it, the rest ignore it. */
   strokeScale?: number;
+  /** Ring designs blur a copy of their fill under it. */
+  ringGlow?: boolean;
+  /** Ring designs draw a thin second ring just inside the main one, painted like the fill. */
+  halo?: boolean;
 }
 
 export type GaugeDesignKey =
