@@ -6,7 +6,7 @@ import {
   fetchLightingDevices, fetchAnimateSettings, saveAnimateTemplates,
   fetchAnimateDefaults, cachedAnimateDefaults,
   setLightingDevicePower, setLightingDeviceControlled,
-  renameLightingDevice, saveLightingGroups, saveLightingStacks, saveDeviceLayout,
+  renameLightingDevice, saveLightingGroups, saveLightingStacks, saveDeviceLayout, setLightingSelectionLock,
   fetchScreenEffect, setScreenEffect, fetchMediaEffect, setMediaEffect, fetchLedMap,
   fetchCurrentSync, fetchAvailableMappings,
   setLightingPaused,
@@ -287,6 +287,7 @@ export function LightingPage({ serviceOnline, serviceState, connectionState, act
   // Stacked cards share one frame and one selection; the selection setters
   // below read the ref so they stay stable across stack edits.
   const [deviceStacks, setDeviceStacks] = useState<DeviceStack[]>([]);
+  const [selectionLockedIds, setSelectionLockedIds] = useState<ReadonlySet<string>>(() => new Set());
   const deviceStacksRef = useRef(deviceStacks);
   deviceStacksRef.current = deviceStacks;
   const deviceDraggingRef = useRef(false);
@@ -589,6 +590,7 @@ export function LightingPage({ serviceOnline, serviceState, connectionState, act
     hiddenDeviceIdsRef.current = hiddenCardIds(data);
     setDeviceGroups(data.groups ?? []);
     setDeviceStacks(data.stacks ?? []);
+    setSelectionLockedIds(new Set(data.selectionLocked ?? []));
     const next = (data.devices ?? []).map(d => ({
       ...d,
       canvasW: Math.max(60, d.canvasW),
@@ -1532,6 +1534,15 @@ export function LightingPage({ serviceOnline, serviceState, connectionState, act
     setLightingDeviceControlled(id, nextControlled).catch(() => { /* 3s poll reconciles */ });
     setDevices(prev => prev.map(d => ids.has(d.id) ? { ...d, controlled: nextControlled } : d));
   }, []);
+  const handleToggleSelectionLock = useCallback((id: string) => {
+    const locked = !selectionLockedIds.has(id);
+    setLightingSelectionLock(id, locked).catch(() => { /* 3s poll reconciles */ });
+    setSelectionLockedIds(prev => {
+      const next = new Set(prev);
+      if (locked) next.add(id); else next.delete(id);
+      return next;
+    });
+  }, [selectionLockedIds]);
   const handleSetControlled = useCallback((id: string, controlled: boolean) => {
     const current = devicesRef.current.find(d => d.id === id);
     const ids = current ? controlGroupOf(devicesRef.current, current) : new Set([id]);
@@ -1687,8 +1698,8 @@ export function LightingPage({ serviceOnline, serviceState, connectionState, act
   // narrows it to the matches for the same reason.
   const selectAllIds = useMemo(
     () => (railSearch.active ? railDevices : orderedDevices)
-      .filter(d => !zoneCardUnavailable(d) && selectAllEligible(d)).map(d => d.id),
-    [orderedDevices, railDevices, railSearch.active],
+      .filter(d => !zoneCardUnavailable(d) && selectAllEligible(d) && !selectionLockedIds.has(d.id)).map(d => d.id),
+    [orderedDevices, railDevices, railSearch.active, selectionLockedIds],
   );
 
   // Colour tuning. The modal owns its own device scope, but it opens on what
@@ -1815,6 +1826,7 @@ export function LightingPage({ serviceOnline, serviceState, connectionState, act
     setDevices(devices);
     setDeviceGroups(data.groups ?? []);
     setDeviceStacks(data.stacks ?? []);
+    setSelectionLockedIds(new Set(data.selectionLocked ?? []));
     void refreshKeyReactive();
     void refreshColorAdjust();
   }, [refreshKeyReactive, refreshColorAdjust]);
@@ -3066,6 +3078,8 @@ export function LightingPage({ serviceOnline, serviceState, connectionState, act
             onSetPower={handleSetPower}
             onToggleControlled={handleToggleControlled}
             onSetControlled={handleSetControlled}
+            selectionLockedIds={selectionLockedIds}
+            onToggleSelectionLock={handleToggleSelectionLock}
             lightingOff={mode === 'none'}
             onOpenSettings={handleOpenSettings}
             onOpenColorTuning={handleOpenColorTuning}

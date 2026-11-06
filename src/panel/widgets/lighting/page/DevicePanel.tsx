@@ -39,7 +39,7 @@ import styles from '../LightingPage.module.scss';
  * using the same component/styling as a motherboard group: a chevron, the brand
  * name, a group power switch, and its lights as indented child cards.
  */
-export function DevicePanel({ devices, allDevices, hidingUncontrolled = false, filtering = false, header, pins, versionForSlot, ledFullscreen, pinSource, pinDisabledReason, pinTargetName, onSetPin, pinHintIds, onPinHintPress, onPinHintTarget, pickTargetIds, pulse, selectedIds, onSetSelection, onTogglePower, onSetPower, onToggleControlled, onSetControlled, lightingOff, onOpenSettings, onOpenColorTuning, colorTunedIds, keyReactiveIds, keyReactiveOnIds, onOpenKeyReactions, onRenameDevice, onDeviceReorder, communityCounts, onOpenCommunity, lianLiFirmwareHubs, onLianLiTakeControl, firmwareDeviceIds, onFirmwareTakeControl, onOpenDevicePage, onOpenZoneSizes, zoneSizeDeviceIds, onOpenSmartLights, discovery, rgbRunning = false, groups = [], onGroupsChange, stacks = [], onStacksChange, runningApps, curatedControl, onOpenAppStrip, onOpenFixLighting, onOpenFixLightingLink, unboundWireless, onOpenWirelessBinding }: {
+export function DevicePanel({ devices, allDevices, hidingUncontrolled = false, filtering = false, header, pins, versionForSlot, ledFullscreen, pinSource, pinDisabledReason, pinTargetName, onSetPin, pinHintIds, onPinHintPress, onPinHintTarget, pickTargetIds, pulse, selectedIds, onSetSelection, onTogglePower, onSetPower, onToggleControlled, onSetControlled, selectionLockedIds, onToggleSelectionLock, lightingOff, onOpenSettings, onOpenColorTuning, colorTunedIds, keyReactiveIds, keyReactiveOnIds, onOpenKeyReactions, onRenameDevice, onDeviceReorder, communityCounts, onOpenCommunity, lianLiFirmwareHubs, onLianLiTakeControl, firmwareDeviceIds, onFirmwareTakeControl, onOpenDevicePage, onOpenZoneSizes, zoneSizeDeviceIds, onOpenSmartLights, discovery, rgbRunning = false, groups = [], onGroupsChange, stacks = [], onStacksChange, runningApps, curatedControl, onOpenAppStrip, onOpenFixLighting, onOpenFixLightingLink, unboundWireless, onOpenWirelessBinding }: {
   devices: LightingDevice[];
   /** Optional control rendered at the top of the scrolling list (master brightness). */
   /** Every device before the Nexus-Control-off filter, so a group header can
@@ -94,6 +94,9 @@ export function DevicePanel({ devices, allDevices, hidingUncontrolled = false, f
   onSetControlled: (id: string, controlled: boolean) => void;
   /** Whether the lighting mode is 'none' (off). Swaps the empty message. */
   lightingOff: boolean;
+  /** Cards Select all leaves out; they carry a lock mark by the name. */
+  selectionLockedIds?: ReadonlySet<string>;
+  onToggleSelectionLock?: (id: string) => void;
   onOpenSettings: (id: string) => void;
   /** Opens the colour-tuning modal scoped to this card (or, when it is part of
    *  a multi-selection, to the whole selection). */
@@ -408,7 +411,7 @@ export function DevicePanel({ devices, allDevices, hidingUncontrolled = false, f
   const openDevicePageFor = (d: LightingDevice) =>
     fwOf(d) && d.parentDeviceId && onOpenDevicePage ? () => onOpenDevicePage(`curated-${d.parentDeviceId}`) : undefined;
   const selectAllFor = (members: readonly LightingDevice[]) => {
-    const ids = members.filter(z => !zoneCardUnavailable(z) && !fwOf(z)).map(z => z.id);
+    const ids = members.filter(z => !zoneCardUnavailable(z) && !fwOf(z) && !selectionLockedIds?.has(z.id)).map(z => z.id);
     return ids.length > 0 ? { count: ids.length, run: () => onSetSelection(new Set(ids), ids[0]) } : undefined;
   };
 
@@ -488,6 +491,8 @@ export function DevicePanel({ devices, allDevices, hidingUncontrolled = false, f
       onToggleControlled={() => toggleControlledFor(d)}
       onOpenSettings={() => onOpenSettings(d.id)}
       onOpenColorTuning={onOpenColorTuning ? () => onOpenColorTuning(d.id) : undefined}
+      selectionLocked={selectionLockedIds?.has(d.id)}
+      onToggleSelectionLock={onToggleSelectionLock ? () => onToggleSelectionLock(d.id) : undefined}
       onOpenKeyReactions={onOpenKeyReactions && keyReactiveIds?.has(d.id) ? () => onOpenKeyReactions(d.id) : undefined}
       typeReactiveOn={keyReactiveOnIds?.has(d.id)}
       onRename={onRenameDevice ? name => onRenameDevice(d.id, name) : undefined}

@@ -1,5 +1,5 @@
 import { useId, useRef, useState, type ReactNode } from 'react';
-import { Power, PowerOff, Ban, Blend, Eye, Keyboard, Lightbulb, Users, Cpu, Check, Link2Off, Link2, Layers, MousePointerClick, Paintbrush, Pencil, Pin, PinOff, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { Power, PowerOff, Ban, Blend, Eye, Keyboard, Lightbulb, Users, Cpu, Check, Link2Off, Link2, Layers, Lock, LockOpen, MousePointerClick, Paintbrush, Pencil, Pin, PinOff, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import {
   identifyLightingDevice,
   type LightingDevice,
@@ -290,6 +290,8 @@ export function ZoneCard({
   onToggleControlled,
   onOpenSettings,
   onOpenColorTuning,
+  selectionLocked,
+  onToggleSelectionLock,
   onOpenKeyReactions,
   typeReactiveOn,
   onRename,
@@ -346,6 +348,10 @@ export function ZoneCard({
   /** Opens the colour-tuning modal. Unlike the LED map it is meaningful for a
    *  whole selection, so the row stays on the menu in bulk mode. */
   onOpenColorTuning?: () => void;
+  /** Select all leaves this card out; a lock mark sits by the name. */
+  selectionLocked?: boolean;
+  /** Puts the card in or out of Select all. Single cards only. */
+  onToggleSelectionLock?: () => void;
   /** Opens the key-reactions modal on this keyboard. Like Customize it stays
    *  on THIS card in a selection; omitted for a card that is not a per-key keyboard. */
   onOpenKeyReactions?: () => void;
@@ -601,6 +607,11 @@ export function ZoneCard({
         });
       }
     }
+    if (onToggleSelectionLock && !bulk && !unavailable) {
+      toggles.push(selectionLocked
+        ? { key: 'selectLock', icon: <LockOpen size={14} />, label: t('lighting.devices.selectLockOff'), onSelect: onToggleSelectionLock }
+        : { key: 'selectLock', icon: <Lock size={14} />, label: t('lighting.devices.selectLockOn'), description: t('lighting.devices.selectLockDesc'), onSelect: onToggleSelectionLock });
+    }
     const locate: DeviceMenuItem[] = [];
     if (bulk) {
       if (bulk.identifyCount > 0) {
@@ -731,6 +742,13 @@ export function ZoneCard({
                 <Blend size={12} aria-hidden />
               </span>
             )}
+          </HoverTooltip>
+        )}
+        {selectionLocked && (
+          <HoverTooltip body={t('lighting.devices.selectLocked')} side="top">
+            <span className={styles.deviceTuneBadge} role="img" aria-label={t('lighting.devices.selectLocked')}>
+              <Lock size={12} aria-hidden />
+            </span>
           </HoverTooltip>
         )}
         {inStack && (

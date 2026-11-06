@@ -539,6 +539,8 @@ export interface LightingDevicesResponse {
   groups?: DeviceGroup[];
   /** Cards stacked to one canvas frame and one selection, each with how the frame is shared. Absent on older services. */
   stacks?: DeviceStack[];
+  /** Card ids the page's Select all leaves out. Absent on older services. */
+  selectionLocked?: string[];
   /** Set by fetchLightingDevices: every card the service listed, OpenRGB ones included, for ids that must outlive a hidden card. */
   allDevices?: LightingDevice[];
   /** Set by fetchLightingDevices: the daemon state `devices` was filtered by. */
@@ -548,6 +550,10 @@ export interface LightingDevicesResponse {
 /** Whole-list replace; the page owns group order and membership. */
 export const saveLightingGroups = (groups: DeviceGroup[]) =>
   putService<{ groups: DeviceGroup[] }>('/devices/lighting-devices/groups', { groups });
+
+/** Keeps a card out of (or back in) the page's Select all. */
+export const setLightingSelectionLock = (id: string, locked: boolean) =>
+  postService('/devices/lighting-devices/selection-lock', { id, locked });
 
 /** Whole-list replace; the page owns stack membership. */
 export const saveLightingStacks = (stacks: DeviceStack[]) =>
