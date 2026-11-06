@@ -222,6 +222,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
     wholeNumbers: widget.config?.[`slot${i}_wholeNumbers`] as boolean | undefined,
     lighting: readSlotLighting(widget.config, i),
     hideUnit: widget.config?.[`slot${i}_hideUnit`] === true,
+    degreeOnly: widget.config?.[`slot${i}_degreeOnly`] === true,
     cycle: readSlotCycle(widget.config, i),
   }));
   const slotDevices = slotConfigs.flatMap(slot => slot.cycle ? slot.cycle.map(entry => entry.device) : [slot.device]);
@@ -267,13 +268,14 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
 
   return (
     <div className={`${styles.performance} ${layoutClass}${fullBleed ? ` ${styles.fullBleed}` : ''}`}>
-      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, cycle }, i) => {
+      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, cycle }, i) => {
         const Slot = cycle ? CyclingPerfSlot : PerfSlot;
         return (
           <Slot
             key={cycle ? `${i}-cycle` : `${i}-${device}-${sensorName}`}
             cycle={cycle ?? undefined}
             hideUnit={hideUnit}
+            degreeOnly={degreeOnly}
             slotIndex={i}
             sensors={sensors}
             fpsSensors={fpsSensors}
@@ -328,6 +330,8 @@ interface PerfSlotProps {
   lighting?: SlotLighting;
   /** Drops the unit after the number so the number alone fills the line. */
   hideUnit?: boolean;
+  /** A temperature reads as a raised ° without the C/F letter. */
+  degreeOnly?: boolean;
   /** Readings shown in turn in place of device/sensor/caption. */
   cycle?: readonly SlotCycleEntry[];
   tempPrefs?: TempSensorPrefs;
@@ -348,12 +352,13 @@ function CyclingPerfSlot({ cycle, ...props }: PerfSlotProps & { cycle?: readonly
   );
 }
 
-export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
+export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
   const { monitoringTempUnit, numberFormat, monitoringWholeNumbers } = useUnitPrefs();
   const effectiveSensorName = device === 'network' && !sensorName ? NETWORK_SENSOR_TOTAL : sensorName;
   const sensor = resolveSensor(sensors, fpsSensors, networkSensors, device, effectiveSensorName, tempPrefs, extras);
   const rawValue = sensor?.value ?? 0;
-  const formatted = sensor ? formatSensorValue(sensor.value, sensor.units, sensor.formatted, monitoringTempUnit, numberFormat, sensor.type, wholeNumbers ?? monitoringWholeNumbers) : '-';
+  const reading = sensor ? formatSensorValue(sensor.value, sensor.units, sensor.formatted, monitoringTempUnit, numberFormat, sensor.type, wholeNumbers ?? monitoringWholeNumbers) : '-';
+  const formatted = degreeOnly ? reading.replace(/\s*°[CF]$/, '°') : reading;
   // Auto / hide / custom caption; the stored custom text survives sensor
   // changes and mode switches. The a11y name stays meaningful even when hidden.
   const autoLabel = labelForDevice(device, sensorCaptionName(device, sensors, sensor) ?? effectiveSensorName);
@@ -441,6 +446,7 @@ export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extra
     'data-text-lighting': lighting && lighting.textColor !== 'off' ? lighting.textColor : undefined,
     'data-text-glow': lighting && lighting.textGlow !== 'off' ? lighting.textGlow : undefined,
     'data-hide-unit': hideUnit ? '' : undefined,
+    'data-unit-degree': degreeOnly ? '' : undefined,
   };
   const backdropSpec = lighting && lighting.backdrop > 0 ? gaugeGradient?.lightingDevice ?? null : null;
 

@@ -311,6 +311,12 @@
   display: none;
 }
 
+[data-unit-degree] .panel-gauge-unit {
+  margin-left: 0.04em;
+  vertical-align: top;
+  color: inherit;
+}
+
 .panel-card {
   background-color: color-mix(in srgb, var(--panel-card-fill) var(--panel-card-bg-opacity, 100%), transparent);
   // Border fades with the user's widget opacity slider so a 0% widget has zero
