@@ -17,14 +17,14 @@
   position: absolute;
   inset: -12%;
   background-image: radial-gradient(circle, var(--panel-accent) 0%, var(--panel-accent) 100%);
-  filter: blur(14px) saturate(1.6);
+  filter: blur(14px);
   transform: scale(1.08);
 }
 
 .core {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 50%, rgb(0 0 0 / 82%) 0%, rgb(0 0 0 / 70%) 34%, rgb(0 0 0 / 32%) 58%, rgb(0 0 0 / 0%) 76%);
+  background: radial-gradient(circle at 50% 50%, rgb(0 0 0 / 18%) 0%, rgb(0 0 0 / 0%) 60%);
 }
 
 .glass {
@@ -32,8 +32,7 @@
   inset: 0;
   border-radius: 50%;
   background:
-    radial-gradient(120% 70% at 30% 0%, rgb(255 255 255 / 22%) 0%, rgb(255 255 255 / 6%) 38%, rgb(255 255 255 / 0%) 60%),
-    radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0%) 70%, rgb(255 255 255 / 10%) 100%);
+    radial-gradient(120% 70% at 30% 0%, rgb(255 255 255 / 9%) 0%, rgb(255 255 255 / 0%) 45%);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
 }
 
@@ -82,7 +81,7 @@
   letter-spacing: -0.02em;
   line-height: 1;
   color: #fff;
-  text-shadow: 0 1px 10px rgb(0 0 0 / 55%);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 45%), 0 2px 14px rgb(0 0 0 / 50%);
 }
 
 .label {
@@ -93,8 +92,8 @@
   text-align: center;
   font-size: var(--type-gauge-caption);
   font-weight: var(--weight-strong);
-  color: rgb(255 255 255 / 78%);
+  color: rgb(255 255 255 / 90%);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  text-shadow: 0 1px 8px rgb(0 0 0 / 55%);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 45%), 0 1px 10px rgb(0 0 0 / 50%);
 }

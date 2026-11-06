@@ -10,8 +10,6 @@ const HUE_BINS = 24;
 const CARD_CACHE_MS = 15_000;
 const EMIT_INTERVAL_MS = 40;
 const SMOOTHING = 0.25;
-// A dark LED on the glass reads as the empty track, so pattern colours keep this much brightness.
-const PATTERN_MIN_PEAK = 90;
 /** Logical size of the lighting canvas the card rects are laid out in (LightingEngine.CanvasUnitsW/H). */
 const CANVAS_UNITS_W = 1000;
 const CANVAS_UNITS_H = 600;
@@ -129,11 +127,11 @@ function toHex([r, g, b]: Rgb): string {
   return `#${part(r)}${part(g)}${part(b)}`;
 }
 
-function liftToFloor([r, g, b]: Rgb): Rgb {
+/** The colour an LED emits at full output: its hue kept, its brightest channel at 255, as the glass shows it. */
+function atFullOutput([r, g, b]: Rgb): Rgb {
   const peak = Math.max(r, g, b);
-  if (peak >= PATTERN_MIN_PEAK) return [r, g, b];
-  if (peak <= 0) return [PATTERN_MIN_PEAK, PATTERN_MIN_PEAK, PATTERN_MIN_PEAK];
-  const k = PATTERN_MIN_PEAK / peak;
+  if (peak <= 0) return [0, 0, 0];
+  const k = 255 / peak;
   return [r * k, g * k, b * k];
 }
 
@@ -188,7 +186,7 @@ export function useLightingLive(spec: string | null): LightingLive {
       // A dark LED takes the card's dominant colour, so a gap in the effect never paints the glass grey.
       const stops: GaugeGradientStop[] = leds.map((led, i) => ({
         at: count === 1 ? 0 : i / (count - 1),
-        color: toHex(Math.max(led[0], led[1], led[2]) < 12 && accent ? accent : liftToFloor(led)),
+        color: toHex(Math.max(led[0], led[1], led[2]) < 12 && accent ? accent : atFullOutput(led)),
       }));
       setState({ accent: accent ? toHex(accent) : null, stops });
     });
