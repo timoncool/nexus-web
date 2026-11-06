@@ -29,6 +29,7 @@ import { remapGaugeGradientToDomain } from '../../theme/gaugeGradient';
 import { readSlotSizes, slotSizeVars, type SlotSizes } from './slotSizes';
 import { RING_LIGHTING_DESIGNS, readSlotLighting, type SlotLighting } from './slotLighting';
 import { LightingBackdrop } from './LightingBackdrop';
+import { readSlotCycle, useSlotCycle, type SlotCycleEntry } from './slotCycle';
 import { defaultValueColorReverse, designSupportsValueColor, gaugeAccentVars, hasValueColorReading, reverseGaugeGradient, sensorSupportsValueColor } from './valueColor';
 import { accentShadowAlpha } from '../../../lib/settings';
 import styles from './MonitoringWidget.module.scss';
@@ -220,17 +221,20 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
     sizes: readSlotSizes(widget.config, i),
     wholeNumbers: widget.config?.[`slot${i}_wholeNumbers`] as boolean | undefined,
     lighting: readSlotLighting(widget.config, i),
+    hideUnit: widget.config?.[`slot${i}_hideUnit`] === true,
+    cycle: readSlotCycle(widget.config, i),
   }));
+  const slotDevices = slotConfigs.flatMap(slot => slot.cycle ? slot.cycle.map(entry => entry.device) : [slot.device]);
   const microDevice = widget.config?.micro_device as DeviceKey | undefined;
   const usesFps = isMicro
     ? microDevice === 'fps'
-    : slotConfigs.some(slot => slot.device === 'fps');
+    : slotDevices.includes('fps');
   const usesNetwork = isMicro
     ? microDevice === 'network'
-    : slotConfigs.some(slot => slot.device === 'network');
+    : slotDevices.includes('network');
   const usesExtras = isMicro
     ? isExtrasBackedDevice(microDevice ?? 'cpu')
-    : slotConfigs.some(slot => isExtrasBackedDevice(slot.device));
+    : slotDevices.some(isExtrasBackedDevice);
   // Call hooks unconditionally (no branch, no early return) or the hooks-order
   // guard trips when slot count toggles between Micro (3/4) and multi (1/2/4).
   const sensors = useSensors(true);
@@ -263,10 +267,13 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
 
   return (
     <div className={`${styles.performance} ${layoutClass}${fullBleed ? ` ${styles.fullBleed}` : ''}`}>
-      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes, wholeNumbers, lighting }, i) => {
+      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, cycle }, i) => {
+        const Slot = cycle ? CyclingPerfSlot : PerfSlot;
         return (
-          <PerfSlot
-            key={`${i}-${device}-${sensorName}`}
+          <Slot
+            key={cycle ? `${i}-cycle` : `${i}-${device}-${sensorName}`}
+            cycle={cycle ?? undefined}
+            hideUnit={hideUnit}
             slotIndex={i}
             sensors={sensors}
             fpsSensors={fpsSensors}
@@ -319,12 +326,29 @@ interface PerfSlotProps {
   /** Rounds this slot's reading; unset follows the app-wide whole-numbers preference. */
   wholeNumbers?: boolean;
   lighting?: SlotLighting;
+  /** Drops the unit after the number so the number alone fills the line. */
+  hideUnit?: boolean;
+  /** Readings shown in turn in place of device/sensor/caption. */
+  cycle?: readonly SlotCycleEntry[];
   tempPrefs?: TempSensorPrefs;
   selected?: boolean;
   onSelect?: () => void;
 }
 
-export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, lighting, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
+function CyclingPerfSlot({ cycle, ...props }: PerfSlotProps & { cycle?: readonly SlotCycleEntry[] }) {
+  const entry = useSlotCycle(cycle ?? []);
+  return (
+    <PerfSlot
+      {...props}
+      device={entry.device}
+      sensorName={entry.sensor}
+      labelMode={entry.label ? 'custom' : undefined}
+      labelOverride={entry.label}
+    />
+  );
+}
+
+export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
   const { monitoringTempUnit, numberFormat, monitoringWholeNumbers } = useUnitPrefs();
   const effectiveSensorName = device === 'network' && !sensorName ? NETWORK_SENSOR_TOTAL : sensorName;
   const sensor = resolveSensor(sensors, fpsSensors, networkSensors, device, effectiveSensorName, tempPrefs, extras);
@@ -413,10 +437,11 @@ export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extra
   const sizeStyle = lighting && design === 'ambient' && (lighting.glowBrightness !== 1 || lighting.glowSaturation !== 1)
     ? { ...sizeVars, '--glow-brightness': String(lighting.glowBrightness), '--glow-saturation': String(lighting.glowSaturation) } as CSSProperties
     : sizeVars;
-  const lightingAttrs = lighting ? {
-    'data-text-lighting': lighting.textColor === 'off' ? undefined : lighting.textColor,
-    'data-text-glow': lighting.textGlow === 'off' ? undefined : lighting.textGlow,
-  } : undefined;
+  const lightingAttrs = {
+    'data-text-lighting': lighting && lighting.textColor !== 'off' ? lighting.textColor : undefined,
+    'data-text-glow': lighting && lighting.textGlow !== 'off' ? lighting.textGlow : undefined,
+    'data-hide-unit': hideUnit ? '' : undefined,
+  };
   const backdropSpec = lighting && lighting.backdrop > 0 ? gaugeGradient?.lightingDevice ?? null : null;
 
   // The tint rides on an inner layout-less wrapper so the slot's own chrome
