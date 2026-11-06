@@ -13,9 +13,9 @@ function conicOf(stops: NonNullable<GaugeProps['ambient']>): string {
 }
 
 /**
- * The glass lit from its rim by the device around it: the card's live LED
- * colours wrap the circle and diffuse inward, a dark core keeps the reading
- * legible, and a thin light ring on the glass carries the value.
+ * The glass lit by the device around it: the card's live LED colours, as the
+ * LEDs show them, wrap the circle and diffuse inward; a thin light ring carries
+ * the value.
  */
 export function AmbientGauge({ value, formatted, label, ambient, strokeScale = 1 }: GaugeProps) {
   const clamped = Math.max(0, Math.min(100, value));
@@ -28,8 +28,6 @@ export function AmbientGauge({ value, formatted, label, ambient, strokeScale = 1
   return (
     <div className={styles.ambient}>
       <div className={styles.light} style={light} aria-hidden="true" />
-      <div className={styles.core} aria-hidden="true" />
-      <div className={styles.glass} aria-hidden="true" />
       <svg className={styles.svg} viewBox="0 0 100 100" aria-hidden="true">
         <circle cx="50" cy="50" r={radius} className={styles.track} style={{ strokeWidth: stroke }} />
         <circle

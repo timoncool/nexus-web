@@ -10,6 +10,8 @@ const HUE_BINS = 24;
 const CARD_CACHE_MS = 15_000;
 const EMIT_INTERVAL_MS = 40;
 const SMOOTHING = 0.25;
+// Per-LED colours only bridge the stream's frame gaps; the glass shows what the LEDs show.
+const LED_SMOOTHING = 0.7;
 /** Logical size of the lighting canvas the card rects are laid out in (LightingEngine.CanvasUnitsW/H). */
 const CANVAS_UNITS_W = 1000;
 const CANVAS_UNITS_H = 600;
@@ -127,13 +129,6 @@ function toHex([r, g, b]: Rgb): string {
   return `#${part(r)}${part(g)}${part(b)}`;
 }
 
-/** The colour an LED emits at full output: its hue kept, its brightest channel at 255, as the glass shows it. */
-function atFullOutput([r, g, b]: Rgb): Rgb {
-  const peak = Math.max(r, g, b);
-  if (peak <= 0) return [0, 0, 0];
-  const k = 255 / peak;
-  return [r * k, g * k, b * k];
-}
 
 export interface LightingLive {
   /** The card's dominant colour, eased. */
@@ -176,17 +171,16 @@ export function useLightingLive(spec: string | null): LightingLive {
       if (leds.length !== count) leds = Array.from({ length: count }, (_, i) => [bytes[i * 3], bytes[i * 3 + 1], bytes[i * 3 + 2]] as Rgb);
       for (let i = 0; i < count; i++) {
         const led = leds[i];
-        led[0] += (bytes[i * 3] - led[0]) * SMOOTHING;
-        led[1] += (bytes[i * 3 + 1] - led[1]) * SMOOTHING;
-        led[2] += (bytes[i * 3 + 2] - led[2]) * SMOOTHING;
+        led[0] += (bytes[i * 3] - led[0]) * LED_SMOOTHING;
+        led[1] += (bytes[i * 3 + 1] - led[1]) * LED_SMOOTHING;
+        led[2] += (bytes[i * 3 + 2] - led[2]) * LED_SMOOTHING;
       }
       const now = performance.now();
       if (now - lastEmit < EMIT_INTERVAL_MS) return;
       lastEmit = now;
-      // A dark LED takes the card's dominant colour, so a gap in the effect never paints the glass grey.
       const stops: GaugeGradientStop[] = leds.map((led, i) => ({
         at: count === 1 ? 0 : i / (count - 1),
-        color: toHex(Math.max(led[0], led[1], led[2]) < 12 && accent ? accent : atFullOutput(led)),
+        color: toHex(led),
       }));
       setState({ accent: accent ? toHex(accent) : null, stops });
     });
