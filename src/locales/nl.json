@@ -4100,6 +4100,7 @@
   "monitoring.settings.valueColorHint": "Kleurt de meting in de meter: koele kleuren zolang die in orde is, rood wanneer het te heet wordt.",
   "monitoring.settings.valueColorReverse": "Schaal omkeren",
   "monitoring.settings.valueColorReverseRow": "Schaal omkeren: {sensor}",
+  "monitoring.settings.wholeNumbers": "Whole numbers",
   "monitoring.tab.cpu": "CPU",
   "monitoring.tab.detailed": "Gedetailleerd",
   "monitoring.tab.gpu": "GPU",

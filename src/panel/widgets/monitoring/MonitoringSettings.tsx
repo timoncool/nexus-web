@@ -716,6 +716,11 @@ export function MonitoringSettings({ widget, surface, desktopEditor, onUpdate, s
                 ariaLabel={t('monitoring.settings.sensor')}
               />
             </div>
+            <SettingsToggle
+              label={t('monitoring.settings.wholeNumbers')}
+              checked={(widget.config?.[`slot${activeSlot}_wholeNumbers`] as boolean | undefined) ?? false}
+              onChange={next => onUpdate({ [`slot${activeSlot}_wholeNumbers`]: next ? true : null })}
+            />
             <LabelControls
               mode={slotLabelMode}
               override={slotLabelOverride}

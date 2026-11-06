@@ -4100,6 +4100,7 @@
   "monitoring.settings.valueColorHint": "Colorea la lectura en el indicador: colores fríos mientras está bajo control y rojo cuando sube demasiado.",
   "monitoring.settings.valueColorReverse": "Invertir escala",
   "monitoring.settings.valueColorReverseRow": "Invertir escala: {sensor}",
+  "monitoring.settings.wholeNumbers": "Whole numbers",
   "monitoring.tab.cpu": "CPU",
   "monitoring.tab.detailed": "Detalles",
   "monitoring.tab.gpu": "GPU",

@@ -4100,6 +4100,7 @@
   "monitoring.settings.valueColorHint": "Colore la mesure dans la jauge : couleurs froides tant qu’elle reste correcte, rouge quand elle grimpe.",
   "monitoring.settings.valueColorReverse": "Inverser l’échelle",
   "monitoring.settings.valueColorReverseRow": "Inverser l’échelle : {sensor}",
+  "monitoring.settings.wholeNumbers": "Whole numbers",
   "monitoring.tab.cpu": "CPU",
   "monitoring.tab.detailed": "Détails",
   "monitoring.tab.gpu": "GPU",

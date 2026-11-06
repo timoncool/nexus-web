@@ -4100,6 +4100,7 @@
   "monitoring.settings.valueColorHint": "Paint the reading into the gauge: cool colors while it is in check, red as it runs hot.",
   "monitoring.settings.valueColorReverse": "Reverse scale",
   "monitoring.settings.valueColorReverseRow": "Reverse scale: {sensor}",
+  "monitoring.settings.wholeNumbers": "Whole numbers",
   "monitoring.tab.cpu": "CPU",
   "monitoring.tab.detailed": "Detailed",
   "monitoring.tab.gpu": "GPU",

@@ -4100,6 +4100,7 @@
   "monitoring.settings.valueColorHint": "Pinta a leitura no indicador: cores frias enquanto está sob controle e vermelho quando esquenta.",
   "monitoring.settings.valueColorReverse": "Inverter escala",
   "monitoring.settings.valueColorReverseRow": "Inverter escala: {sensor}",
+  "monitoring.settings.wholeNumbers": "Whole numbers",
   "monitoring.tab.cpu": "CPU",
   "monitoring.tab.detailed": "Detalhado",
   "monitoring.tab.gpu": "GPU",

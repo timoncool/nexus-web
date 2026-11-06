@@ -216,6 +216,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
     labelOverride: widget.config?.[`slot${i}_label`] as string | undefined,
     labelMode: widget.config?.[`slot${i}_labelMode`] as string | undefined,
     sizes: readSlotSizes(widget.config, i),
+    wholeNumbers: widget.config?.[`slot${i}_wholeNumbers`] as boolean | undefined,
   }));
   const microDevice = widget.config?.micro_device as DeviceKey | undefined;
   const usesFps = isMicro
@@ -259,7 +260,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
 
   return (
     <div className={`${styles.performance} ${layoutClass}${fullBleed ? ` ${styles.fullBleed}` : ''}`}>
-      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes }, i) => {
+      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes, wholeNumbers }, i) => {
         return (
           <PerfSlot
             key={`${i}-${device}-${sensorName}`}
@@ -280,6 +281,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
             labelOverride={labelOverride}
             labelMode={labelMode}
             sizes={sizes}
+            wholeNumbers={wholeNumbers}
             tempPrefs={tempPrefs}
             selected={selectable && i === activeSlot}
             onSelect={selectable ? () => onSelectSlot?.(i) : undefined}
@@ -310,17 +312,19 @@ interface PerfSlotProps {
   labelOverride?: string;
   labelMode?: string;
   sizes?: SlotSizes;
+  /** Rounds this slot's reading; unset follows the app-wide whole-numbers preference. */
+  wholeNumbers?: boolean;
   tempPrefs?: TempSensorPrefs;
   selected?: boolean;
   onSelect?: () => void;
 }
 
-export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
+export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
   const { monitoringTempUnit, numberFormat, monitoringWholeNumbers } = useUnitPrefs();
   const effectiveSensorName = device === 'network' && !sensorName ? NETWORK_SENSOR_TOTAL : sensorName;
   const sensor = resolveSensor(sensors, fpsSensors, networkSensors, device, effectiveSensorName, tempPrefs, extras);
   const rawValue = sensor?.value ?? 0;
-  const formatted = sensor ? formatSensorValue(sensor.value, sensor.units, sensor.formatted, monitoringTempUnit, numberFormat, sensor.type, monitoringWholeNumbers) : '-';
+  const formatted = sensor ? formatSensorValue(sensor.value, sensor.units, sensor.formatted, monitoringTempUnit, numberFormat, sensor.type, wholeNumbers ?? monitoringWholeNumbers) : '-';
   // Auto / hide / custom caption; the stored custom text survives sensor
   // changes and mode switches. The a11y name stays meaningful even when hidden.
   const autoLabel = labelForDevice(device, sensorCaptionName(device, sensors, sensor) ?? effectiveSensorName);

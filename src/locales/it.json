@@ -4100,6 +4100,7 @@
   "monitoring.settings.valueColorHint": "Colora il valore nell'indicatore: colori freddi quando è sotto controllo, rosso quando si surriscalda.",
   "monitoring.settings.valueColorReverse": "Inverti scala",
   "monitoring.settings.valueColorReverseRow": "Inverti scala: {sensor}",
+  "monitoring.settings.wholeNumbers": "Whole numbers",
   "monitoring.tab.cpu": "CPU",
   "monitoring.tab.detailed": "Dettagli",
   "monitoring.tab.gpu": "GPU",

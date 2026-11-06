@@ -4100,6 +4100,7 @@
   "monitoring.settings.valueColorHint": "將讀數上色到儀表上：正常時為冷色，過熱時轉為紅色。",
   "monitoring.settings.valueColorReverse": "反轉刻度",
   "monitoring.settings.valueColorReverseRow": "反轉刻度：{sensor}",
+  "monitoring.settings.wholeNumbers": "Whole numbers",
   "monitoring.tab.cpu": "CPU",
   "monitoring.tab.detailed": "詳細",
   "monitoring.tab.gpu": "GPU",

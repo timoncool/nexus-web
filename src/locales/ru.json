@@ -4139,6 +4139,7 @@
   "monitoring.settings.valueColorHint": "Окрашивает показание на индикаторе: холодные цвета, пока оно в норме, и красный при перегреве.",
   "monitoring.settings.valueColorReverse": "Обратная шкала",
   "monitoring.settings.valueColorReverseRow": "Обратная шкала: {sensor}",
+  "monitoring.settings.wholeNumbers": "Целые числа",
   "monitoring.tab.cpu": "CPU",
   "monitoring.tab.detailed": "Подробно",
   "monitoring.tab.gpu": "GPU",

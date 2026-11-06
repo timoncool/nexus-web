@@ -4100,6 +4100,7 @@
   "monitoring.settings.valueColorHint": "Färbt den Messwert in die Anzeige: kühle Farben, solange der Wert im Rahmen bleibt, Rot wenn es heiß wird.",
   "monitoring.settings.valueColorReverse": "Skala umkehren",
   "monitoring.settings.valueColorReverseRow": "Skala umkehren: {sensor}",
+  "monitoring.settings.wholeNumbers": "Whole numbers",
   "monitoring.tab.cpu": "CPU",
   "monitoring.tab.detailed": "Details",
   "monitoring.tab.gpu": "GPU",

@@ -4100,6 +4100,7 @@
   "monitoring.settings.valueColorHint": "値をゲージに色付けします。正常なときは寒色、高温になると赤になります。",
   "monitoring.settings.valueColorReverse": "スケールを反転",
   "monitoring.settings.valueColorReverseRow": "スケールを反転：{sensor}",
+  "monitoring.settings.wholeNumbers": "Whole numbers",
   "monitoring.tab.cpu": "CPU",
   "monitoring.tab.detailed": "詳細",
   "monitoring.tab.gpu": "GPU",

@@ -4139,6 +4139,7 @@
   "monitoring.settings.valueColorHint": "Vybarví hodnotu v ukazateli: studené barvy, dokud je vše v pořádku, červená, když se zahřívá.",
   "monitoring.settings.valueColorReverse": "Obrátit stupnici",
   "monitoring.settings.valueColorReverseRow": "Obrátit stupnici: {sensor}",
+  "monitoring.settings.wholeNumbers": "Whole numbers",
   "monitoring.tab.cpu": "CPU",
   "monitoring.tab.detailed": "Podrobně",
   "monitoring.tab.gpu": "GPU",

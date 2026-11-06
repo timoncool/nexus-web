@@ -4100,6 +4100,7 @@
   "monitoring.settings.valueColorHint": "수치를 게이지에 색으로 표시합니다. 정상이면 차가운 색, 과열되면 빨간색입니다.",
   "monitoring.settings.valueColorReverse": "스케일 반전",
   "monitoring.settings.valueColorReverseRow": "스케일 반전: {sensor}",
+  "monitoring.settings.wholeNumbers": "Whole numbers",
   "monitoring.tab.cpu": "CPU",
   "monitoring.tab.detailed": "상세",
   "monitoring.tab.gpu": "GPU",

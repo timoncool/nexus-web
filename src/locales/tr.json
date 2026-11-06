@@ -4100,6 +4100,7 @@
   "monitoring.settings.valueColorHint": "Değeri göstergeye renk olarak işler: normalken soğuk renkler, ısındığında kırmızı.",
   "monitoring.settings.valueColorReverse": "Ölçeği ters çevir",
   "monitoring.settings.valueColorReverseRow": "Ölçeği ters çevir: {sensor}",
+  "monitoring.settings.wholeNumbers": "Whole numbers",
   "monitoring.tab.cpu": "CPU",
   "monitoring.tab.detailed": "Detayli",
   "monitoring.tab.gpu": "GPU",
