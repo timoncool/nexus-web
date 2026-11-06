@@ -81,11 +81,11 @@ export function HudSettings({ config, slot, onUpdate }: Props) {
               label={t('monitoring.settings.hud.chroma')}
               value={Math.round(hud.chroma * 100)}
               min={0}
-              max={37}
-              step={1}
-              formatValue={v => `${v}`}
-              onChange={(v, commit) => { if (commit) onUpdate({ [key('hudChroma')]: v / 100 }); }}
-              onCommit={v => onUpdate({ [key('hudChroma')]: v / 100 })}
+              max={100}
+              step={5}
+              formatValue={v => `${v}%`}
+              onChange={(v, commit) => { if (commit) onUpdate({ [key('hudChroma')]: v === 100 ? null : v / 100 }); }}
+              onCommit={v => onUpdate({ [key('hudChroma')]: v === 100 ? null : v / 100 })}
             />
           </>
         )}

@@ -1,4 +1,4 @@
-import { clampChroma, converter, formatHex, type Oklch } from 'culori';
+import { clampChroma, converter, displayable, formatHex } from 'culori';
 import { APCAcontrast, sRGBtoY } from 'apca-w3';
 import type { GaugeGradientStop } from '../../theme/gaugeGradient';
 
@@ -26,7 +26,7 @@ export interface HudSettings {
   roles: Record<HudPiece, HudRole>;
   /** APCA Lc the text keeps against the glass under it. */
   contrast: number;
-  /** OKLCH chroma the scheme colours aim for before the gamut clamp. */
+  /** Share of the most chroma the screen can show at the chosen lightness, 1 = as vivid as it gets. */
   chroma: number;
 }
 
@@ -54,7 +54,7 @@ export function readHudSettings(config: Record<string, unknown> | undefined, slo
     const v = k(key) as HudRole;
     return [p, ROLES.includes(v) ? v : DEFAULT_ROLES[p]];
   })) as Record<HudPiece, HudRole>;
-  return { mode, scheme, roles, contrast: num(k('hudContrast'), 60, 0, 100), chroma: num(k('hudChroma'), 0.14, 0, 0.37) };
+  return { mode, scheme, roles, contrast: num(k('hudContrast'), 60, 0, 100), chroma: num(k('hudChroma'), 1, 0, 1) };
 }
 
 const bytes = (hex: string): [number, number, number] => {
@@ -62,31 +62,43 @@ const bytes = (hex: string): [number, number, number] => {
   return [Math.round(c.r * 255), Math.round(c.g * 255), Math.round(c.b * 255)];
 };
 const lc = (text: string, bg: string) => Math.abs(APCAcontrast(sRGBtoY(bytes(text)), sRGBtoY(bytes(bg))));
-const hexOf = (c: Oklch) => formatHex(clampChroma(c, 'oklch'));
+
+/** The most chroma sRGB holds at this lightness and hue. */
+function maxChroma(l: number, hue: number): number {
+  let lo = 0;
+  let hi = 0.4;
+  for (let i = 0; i < 10; i++) {
+    const mid = (lo + hi) / 2;
+    if (displayable({ mode: 'oklch', l, c: mid, h: hue })) lo = mid; else hi = mid;
+  }
+  return lo;
+}
+
+const memo = new Map<string, string>();
 
 /**
- * The colour at `hue` that reads against `bg` with at least `target` Lc: the
- * least lightness change that reaches it, on the lighter side first unless the
- * darker one gets there and the lighter cannot.
+ * The most colourful colour of `hue` that still reads against `bg`: every
+ * lightness that reaches `target` Lc is tried and the one where the screen can
+ * hold the most chroma wins (scaled by `share`). With none reaching it, the
+ * stronger of white and black.
  */
-export function readableAt(hue: number, chroma: number, bg: string, target: number): string {
-  const bgL = toOklch(bg)?.l ?? 0.5;
-  const at = (l: number) => hexOf({ mode: 'oklch', l, c: chroma, h: hue });
-  const search = (from: number, to: number): string | null => {
-    if (lc(at(to), bg) < target) return null;
-    let lo = from;
-    let hi = to;
-    for (let i = 0; i < 14; i++) {
-      const mid = (lo + hi) / 2;
-      if (lc(at(mid), bg) >= target) hi = mid; else lo = mid;
-    }
-    return at(hi);
-  };
-  const lighter = search(bgL, 1);
-  if (lighter) return lighter;
-  const darker = search(bgL, 0);
-  if (darker) return darker;
-  return lc('#ffffff', bg) >= lc('#000000', bg) ? '#ffffff' : '#000000';
+export function readableAt(hue: number, share: number, bg: string, target: number): string {
+  const q = bytes(bg).map(v => v >> 4).join('.');
+  const key = `${Math.round(hue / 2)}|${share.toFixed(2)}|${q}|${Math.round(target)}`;
+  const hit = memo.get(key);
+  if (hit) return hit;
+  let best: { hex: string; c: number; lc: number } | null = null;
+  for (let l = 0.03; l <= 0.99; l += 0.02) {
+    const c = maxChroma(l, hue) * share;
+    const hex = formatHex(clampChroma({ mode: 'oklch', l, c, h: hue }, 'oklch'));
+    const contrast = lc(hex, bg);
+    if (contrast < target) continue;
+    if (!best || c > best.c + 0.002 || (Math.abs(c - best.c) <= 0.002 && contrast > best.lc)) best = { hex, c, lc: contrast };
+  }
+  const out = best?.hex ?? (lc('#ffffff', bg) >= lc('#000000', bg) ? '#ffffff' : '#000000');
+  if (memo.size > 4000) memo.clear();
+  memo.set(key, out);
+  return out;
 }
 
 /** The LEDs' average, mixed in OKLab so a red-and-blue strip averages to purple, not grey. */
@@ -109,14 +121,19 @@ function glass(hex: string, brightness: number): string {
   return formatHex({ mode: 'rgb', r: k(c.r), g: k(c.g), b: k(c.b) });
 }
 
-function roleColor(role: HudRole, base: string, s: HudSettings, bg: string): string | null {
+/** APCA asks less of big bold glyphs and strokes than of small text: the number and ring get 15 Lc off the caption's target. */
+const LARGE_PIECE_RELIEF = 15;
+const targetFor = (piece: HudPiece, contrast: number) => (piece === 'label' ? contrast : Math.max(0, contrast - LARGE_PIECE_RELIEF));
+
+function roleColor(role: HudRole, base: string, s: HudSettings, bg: string, piece: HudPiece): string | null {
   if (role === 'white') return null;
   const lch = toOklch(base);
   const hue = lch?.h ?? 0;
-  if (role === 'base') return readableAt(hue, Math.min(s.chroma, lch?.c ?? 0), bg, s.contrast);
+  const target = targetFor(piece, s.contrast);
+  if (role === 'base') return readableAt(hue, s.chroma, bg, target);
   const turns = HUD_SCHEMES[s.scheme];
   const turn = turns[Math.min(turns.length - 1, Number(role.slice(1)) - 1)];
-  return readableAt((hue + turn + 360) % 360, s.chroma, bg, s.contrast);
+  return readableAt((hue + turn + 360) % 360, s.chroma, bg, target);
 }
 
 /** In flow mode the text reads as one block: number, unit and caption all take the LED colour at the top of the glass. */
@@ -136,24 +153,24 @@ export function hudColors(stops: readonly GaugeGradientStop[] | null | undefined
     const base = averageColor(stops)!;
     const bg = glass(base, brightness);
     for (const piece of HUD_PIECES) {
-      const color = roleColor(s.roles[piece], base, s, bg);
+      const color = roleColor(s.roles[piece], base, s, bg, piece);
       if (color) out[piece] = { color };
     }
     return out;
   }
   const memo = new Map<string, string | null>();
-  const colorFor = (role: HudRole, led: string) => {
-    const key = `${role}|${led}`;
-    if (!memo.has(key)) memo.set(key, roleColor(role, led, s, glass(led, brightness)));
+  const colorFor = (role: HudRole, led: string, piece: HudPiece) => {
+    const key = `${role}|${piece === 'label' ? 'small' : 'large'}|${led}`;
+    if (!memo.has(key)) memo.set(key, roleColor(role, led, s, glass(led, brightness), piece));
     return memo.get(key)!;
   };
   for (const piece of HUD_PIECES) {
     const role = s.roles[piece];
     if (role === 'white') continue;
     if (piece === 'ring' || piece === 'track') {
-      out[piece] = { sweep: stops.map(st => ({ at: st.at, color: colorFor(role, st.color) ?? '#ffffff' })) };
+      out[piece] = { sweep: stops.map(st => ({ at: st.at, color: colorFor(role, st.color, piece) ?? '#ffffff' })) };
     } else {
-      const color = colorFor(role, stopAt(stops, TEXT_ANGLE));
+      const color = colorFor(role, stopAt(stops, TEXT_ANGLE), piece);
       if (color) out[piece] = { color };
     }
   }

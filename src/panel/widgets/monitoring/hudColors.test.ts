@@ -15,7 +15,7 @@ const hueDiff = (a: number, b: number) => Math.abs(((a - b + 540) % 360) - 180);
 describe('readableAt', () => {
   it('keeps the asked hue and reaches the contrast against a vivid background', () => {
     for (const bg of ['#ff0040', '#00a0ff', '#40ff00', '#5c0017']) {
-      const c = readableAt(200, 0.12, bg, 60);
+      const c = readableAt(200, 1, bg, 60);
       const best = Math.max(lc('#ffffff', bg), lc('#000000', bg));
       expect(lc(c, bg)).toBeGreaterThanOrEqual(Math.min(59, best - 0.5));
       const h = toOklch(c)?.h;
@@ -26,6 +26,11 @@ describe('readableAt', () => {
 
 describe('hudColors', () => {
   const stops = [{ at: 0, color: '#ff0000' }, { at: 0.5, color: '#ff4000' }];
+
+  it('stays colourful while readable instead of washing out to white', () => {
+    const c = readableAt(280, 1, '#2040c0', 45);
+    expect(toOklch(c)!.c ?? 0).toBeGreaterThan(0.1);
+  });
 
   it('gives nothing in white mode', () => {
     expect(hudColors(stops, readHudSettings({}, 0), 1)).toEqual({});
