@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CYCLE_DEFAULT_SECONDS, CYCLE_MAX_SECONDS, CYCLE_MIN_SECONDS, readSlotCycle } from './slotCycle';
+import { CYCLE_DEFAULT_SECONDS, CYCLE_MAX_SECONDS, CYCLE_MIN_SECONDS, cycleEntryConfig, readSlotCycle } from './slotCycle';
 
 describe('readSlotCycle', () => {
   it('reads every usable entry with its caption and clamped seconds', () => {
@@ -27,5 +27,21 @@ describe('readSlotCycle', () => {
     expect(readSlotCycle({ slot0_cycle: [{ device: 'cpu', sensor: 'a' }] }, 0)).toBeNull();
     expect(readSlotCycle({ slot0_cycle: 'cpu' }, 0)).toBeNull();
     expect(readSlotCycle(undefined, 0)).toBeNull();
+  });
+});
+
+describe('cycleEntryConfig', () => {
+  it('lays the entry sensor, caption and own keys over the slot config', () => {
+    const merged = cycleEntryConfig(
+      { slot0_valueScale: 2.5, slot0_strokeScale: 2.5, slot0_label: 'BASE', slot0_labelMode: 'custom', other: 1 },
+      0,
+      { device: 'quick', sensor: 'summary/cpu-temp', seconds: 10, config: { strokeScale: 1.5, degreeOnly: true } },
+    );
+    expect(merged).toMatchObject({
+      other: 1, slot0_valueScale: 2.5, slot0_strokeScale: 1.5, slot0_degreeOnly: true,
+      slot0_device: 'quick', slot0_sensor: 'summary/cpu-temp',
+    });
+    expect(merged.slot0_label).toBeUndefined();
+    expect(merged.slot0_labelMode).toBeUndefined();
   });
 });

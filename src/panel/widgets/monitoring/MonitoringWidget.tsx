@@ -29,7 +29,7 @@ import { remapGaugeGradientToDomain } from '../../theme/gaugeGradient';
 import { readRingInset, readSlotSizes, slotSizeVars, type SlotSizes } from './slotSizes';
 import { RING_LIGHTING_DESIGNS, readSlotLighting, type SlotLighting } from './slotLighting';
 import { LightingBackdrop } from './LightingBackdrop';
-import { readSlotCycle, useSlotCycle, type SlotCycleEntry } from './slotCycle';
+import { cycleEntryConfig, readSlotCycle, useSlotCycle, type SlotCycleEntry } from './slotCycle';
 import { defaultValueColorReverse, designSupportsValueColor, gaugeAccentVars, hasValueColorReading, reverseGaugeGradient, sensorSupportsValueColor } from './valueColor';
 import { accentShadowAlpha } from '../../../lib/settings';
 import styles from './MonitoringWidget.module.scss';
@@ -201,29 +201,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
   // only to decide whether the lazy fps/network hooks need to subscribe; the
   // render path ignores them.
   const slotConfigs = Array.from({ length: count }, (_, i) => ({
-    device: ((widget.config?.[`slot${i}_device`] as DeviceKey | undefined) ?? DEFAULT_SLOTS[i]?.device ?? 'cpu'),
-    sensorName: ((widget.config?.[`slot${i}_sensor`] as string | undefined) ?? DEFAULT_SLOTS[i]?.sensor ?? ''),
-    // Clamped to what the slot may show: a Hero small cell narrows the set, and
-    // a design stored before the layout switch would render outside its picker.
-    design: resolveSlotDesign(
-      widget.size,
-      layout,
-      i,
-      ((widget.config?.[`slot${i}_design`] as GaugeDesignKey | undefined) ?? defaultSlotDesign(widget.size, i, layout)),
-    ),
-    scale: ((widget.config?.[`slot${i}_scale`] as ScaleMode | undefined) ?? DEFAULT_SCALE_MODE),
-    fixedMin: widget.config?.[`slot${i}_min`] as number | undefined,
-    fixedMax: widget.config?.[`slot${i}_max`] as number | undefined,
-    valueColor: (widget.config?.[`slot${i}_valueColor`] as boolean | undefined) ?? false,
-    valueColorReverse: widget.config?.[`slot${i}_valueColorReverse`] as boolean | undefined,
-    labelOverride: widget.config?.[`slot${i}_label`] as string | undefined,
-    labelMode: widget.config?.[`slot${i}_labelMode`] as string | undefined,
-    sizes: readSlotSizes(widget.config, i),
-    ringInset: readRingInset(widget.config, i),
-    wholeNumbers: widget.config?.[`slot${i}_wholeNumbers`] as boolean | undefined,
-    lighting: readSlotLighting(widget.config, i),
-    hideUnit: widget.config?.[`slot${i}_hideUnit`] === true,
-    degreeOnly: widget.config?.[`slot${i}_degreeOnly`] === true,
+    ...readSlotConfig(widget.config, widget.size, layout, i),
     cycle: readSlotCycle(widget.config, i),
   }));
   const slotDevices = slotConfigs.flatMap(slot => slot.cycle ? slot.cycle.map(entry => entry.device) : [slot.device]);
@@ -275,6 +253,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
           <Slot
             key={cycle ? `${i}-cycle` : `${i}-${device}-${sensorName}`}
             cycle={cycle ?? undefined}
+            slotFor={cycle ? (entry: SlotCycleEntry) => readSlotConfig(cycleEntryConfig(widget.config, i, entry), widget.size, layout, i) : undefined}
             hideUnit={hideUnit}
             degreeOnly={degreeOnly}
             ringInset={ringInset}
@@ -305,6 +284,35 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
       })}
     </div>
   );
+}
+
+/** Everything a slot reads from the widget config; a cycle entry passes the config with its own keys laid over. */
+function readSlotConfig(config: Record<string, unknown> | undefined, size: WidgetProps['widget']['size'], layout: ReturnType<typeof resolvedSlotLayout>, i: number) {
+  return {
+    device: ((config?.[`slot${i}_device`] as DeviceKey | undefined) ?? DEFAULT_SLOTS[i]?.device ?? 'cpu'),
+    sensorName: ((config?.[`slot${i}_sensor`] as string | undefined) ?? DEFAULT_SLOTS[i]?.sensor ?? ''),
+    // Clamped to what the slot may show: a Hero small cell narrows the set, and
+    // a design stored before the layout switch would render outside its picker.
+    design: resolveSlotDesign(
+      size,
+      layout,
+      i,
+      ((config?.[`slot${i}_design`] as GaugeDesignKey | undefined) ?? defaultSlotDesign(size, i, layout)),
+    ),
+    scale: ((config?.[`slot${i}_scale`] as ScaleMode | undefined) ?? DEFAULT_SCALE_MODE),
+    fixedMin: config?.[`slot${i}_min`] as number | undefined,
+    fixedMax: config?.[`slot${i}_max`] as number | undefined,
+    valueColor: (config?.[`slot${i}_valueColor`] as boolean | undefined) ?? false,
+    valueColorReverse: config?.[`slot${i}_valueColorReverse`] as boolean | undefined,
+    labelOverride: config?.[`slot${i}_label`] as string | undefined,
+    labelMode: config?.[`slot${i}_labelMode`] as string | undefined,
+    sizes: readSlotSizes(config, i),
+    ringInset: readRingInset(config, i),
+    wholeNumbers: config?.[`slot${i}_wholeNumbers`] as boolean | undefined,
+    lighting: readSlotLighting(config, i),
+    hideUnit: config?.[`slot${i}_hideUnit`] === true,
+    degreeOnly: config?.[`slot${i}_degreeOnly`] === true,
+  };
 }
 
 interface PerfSlotProps {
@@ -342,17 +350,10 @@ interface PerfSlotProps {
   onSelect?: () => void;
 }
 
-function CyclingPerfSlot({ cycle, ...props }: PerfSlotProps & { cycle?: readonly SlotCycleEntry[] }) {
+function CyclingPerfSlot({ cycle, slotFor, ...props }: PerfSlotProps & { cycle?: readonly SlotCycleEntry[]; slotFor?: (entry: SlotCycleEntry) => ReturnType<typeof readSlotConfig> }) {
   const entry = useSlotCycle(cycle ?? []);
-  return (
-    <PerfSlot
-      {...props}
-      device={entry.device}
-      sensorName={entry.sensor}
-      labelMode={entry.label ? 'custom' : undefined}
-      labelOverride={entry.label}
-    />
-  );
+  const slot = slotFor?.(entry);
+  return <PerfSlot {...props} {...slot} />;
 }
 
 export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, ringInset, tempPrefs, selected = false, onSelect }: PerfSlotProps) {

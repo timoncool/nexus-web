@@ -7,6 +7,8 @@ export interface SlotCycleEntry {
   sensor: string;
   label?: string;
   seconds: number;
+  /** Slot keys this reading sets for itself, without the `slotN_` prefix (valueScale, design, degreeOnly...). */
+  config?: Record<string, unknown>;
 }
 
 export const CYCLE_MIN_SECONDS = 2;
@@ -19,7 +21,7 @@ const seconds = (value: unknown): number => {
 };
 
 /**
- * `slotN_cycle`: a list of {device, sensor, label?, seconds?}. Fewer than two
+ * `slotN_cycle`: a list of {device, sensor, label?, seconds?, config?}. Fewer than two
  * usable entries is no cycle - the slot keeps its own sensor.
  */
 export function readSlotCycle(config: Record<string, unknown> | undefined, slot: number): SlotCycleEntry[] | null {
@@ -27,16 +29,30 @@ export function readSlotCycle(config: Record<string, unknown> | undefined, slot:
   if (!Array.isArray(raw)) return null;
   const entries = raw.flatMap((item): SlotCycleEntry[] => {
     if (!item || typeof item !== 'object') return [];
-    const { device, sensor, label } = item as Record<string, unknown>;
+    const { device, sensor, label, config } = item as Record<string, unknown>;
     if (typeof device !== 'string' || typeof sensor !== 'string' || !sensor) return [];
     return [{
       device: device as DeviceKey,
       sensor,
       label: typeof label === 'string' && label.trim() ? label : undefined,
       seconds: seconds((item as Record<string, unknown>).seconds),
+      ...(config && typeof config === 'object' && !Array.isArray(config) ? { config: config as Record<string, unknown> } : {}),
     }];
   });
   return entries.length >= 2 ? entries : null;
+}
+
+/** The widget config as this reading sees it: its sensor, caption and own keys laid over the slot's. */
+export function cycleEntryConfig(config: Record<string, unknown> | undefined, slot: number, entry: SlotCycleEntry): Record<string, unknown> {
+  const own = Object.fromEntries(Object.entries(entry.config ?? {}).map(([key, value]) => [`slot${slot}_${key}`, value]));
+  return {
+    ...config,
+    ...own,
+    [`slot${slot}_device`]: entry.device,
+    [`slot${slot}_sensor`]: entry.sensor,
+    [`slot${slot}_label`]: entry.label,
+    [`slot${slot}_labelMode`]: entry.label ? 'custom' : undefined,
+  };
 }
 
 /** The entry on screen now; each one stays for its own seconds before the next. */
