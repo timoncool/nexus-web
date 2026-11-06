@@ -119,8 +119,8 @@ function roleColor(role: HudRole, base: string, s: HudSettings, bg: string): str
   return readableAt((hue + turn + 360) % 360, s.chroma, bg, s.contrast);
 }
 
-/** Clockwise angle of each text piece on the glass, for flow mode's local LED colour. */
-const PIECE_ANGLE: Record<HudPiece, number> = { value: 0, unit: 0.12, label: 0.5, ring: 0, track: 0 };
+/** In flow mode the text reads as one block: number, unit and caption all take the LED colour at the top of the glass. */
+const TEXT_ANGLE = 0;
 
 function stopAt(stops: readonly GaugeGradientStop[], at: number): string {
   let best = stops[0];
@@ -153,7 +153,7 @@ export function hudColors(stops: readonly GaugeGradientStop[] | null | undefined
     if (piece === 'ring' || piece === 'track') {
       out[piece] = { sweep: stops.map(st => ({ at: st.at, color: colorFor(role, st.color) ?? '#ffffff' })) };
     } else {
-      const color = colorFor(role, stopAt(stops, PIECE_ANGLE[piece]));
+      const color = colorFor(role, stopAt(stops, TEXT_ANGLE));
       if (color) out[piece] = { color };
     }
   }
