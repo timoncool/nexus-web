@@ -8,7 +8,7 @@ import type { PanelThemeState } from './panelTheme';
 
 const HUE_BINS = 24;
 const CARD_CACHE_MS = 15_000;
-const EMIT_INTERVAL_MS = 80;
+const EMIT_INTERVAL_MS = 40;
 const SMOOTHING = 0.25;
 // A dark LED on the glass reads as the empty track, so pattern colours keep this much brightness.
 const PATTERN_MIN_PEAK = 90;
@@ -185,9 +185,10 @@ export function useLightingLive(spec: string | null): LightingLive {
       const now = performance.now();
       if (now - lastEmit < EMIT_INTERVAL_MS) return;
       lastEmit = now;
+      // A dark LED takes the card's dominant colour, so a gap in the effect never paints the glass grey.
       const stops: GaugeGradientStop[] = leds.map((led, i) => ({
         at: count === 1 ? 0 : i / (count - 1),
-        color: toHex(liftToFloor(led)),
+        color: toHex(Math.max(led[0], led[1], led[2]) < 12 && accent ? accent : liftToFloor(led)),
       }));
       setState({ accent: accent ? toHex(accent) : null, stops });
     });
@@ -201,10 +202,13 @@ export function useLightingAccent(spec: string | null): string | null {
   return useLightingLive(spec).accent;
 }
 
-/** The theme with the live lighting colour standing in for its accent, once one is known. */
+/** Stands in while a followed card has no live colour (lighting off, dongle stalled), instead of the desktop accent. */
+const LIGHTING_PENDING_ACCENT = '#3a3a46';
+
+/** The theme with the live lighting colour standing in for its accent. */
 export function withLightingAccent(theme: PanelThemeState, liveHex: string | null): PanelThemeState {
-  if (!theme.accentLightingDevice || !liveHex) return theme;
-  return { ...theme, accentSyncWithDesktop: false, accentColor: liveHex };
+  if (!theme.accentLightingDevice) return theme;
+  return { ...theme, accentSyncWithDesktop: false, accentColor: liveHex ?? LIGHTING_PENDING_ACCENT };
 }
 
 /** Paints the part of the lighting canvas a card covers onto `canvas`, so the screen shows the same texture its LEDs sample. */

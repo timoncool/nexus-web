@@ -18,7 +18,7 @@ const SCALABLE_DESIGNS = new Set<GaugeDesignKey>([
 // takes a range.
 const FILL_DESIGNS = new Set<GaugeDesignKey>([
   'waterLevel', 'caterpillar', 'squareRing', 'bar', 'fill', 'hbar', 'dotgrid', 'halfgauge',
-  'numberfill', 'thermo', 'arc270', 'wedge', 'battery', 'segments', 'dial', 'tickring',
+  'numberfill', 'thermo', 'arc270', 'wedge', 'battery', 'segments', 'dial', 'tickring', 'ambient',
 ]);
 
 export function designSupportsScale(design: GaugeDesignKey): boolean {

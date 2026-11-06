@@ -23,6 +23,7 @@ import { DialGauge } from './DialGauge';
 import { TickRingGauge } from './TickRingGauge';
 import { BackdropGauge } from './BackdropGauge';
 import { FillGauge } from './FillGauge';
+import { AmbientGauge } from './AmbientGauge';
 
 export type { GaugeProps, GaugeDesignKey };
 
@@ -50,6 +51,7 @@ export const GAUGE_DESIGNS: Record<GaugeDesignKey, ComponentType<GaugeProps>> = 
   tickring: TickRingGauge,
   backdrop: BackdropGauge,
   fill: FillGauge,
+  ambient: AmbientGauge,
 };
 
 export const GAUGE_DESIGN_LABELS: Record<GaugeDesignKey, string> = {
@@ -76,6 +78,7 @@ export const GAUGE_DESIGN_LABELS: Record<GaugeDesignKey, string> = {
   tickring: 'Tick Ring',
   backdrop: 'Backdrop',
   fill: 'Fill',
+  ambient: 'Ambient Glow',
 };
 
 export const GAUGE_DESIGN_KEYS: GaugeDesignKey[] = [
@@ -85,11 +88,12 @@ export const GAUGE_DESIGN_KEYS: GaugeDesignKey[] = [
   'bar', 'fill', 'thermo', 'battery', 'hbar', 'dotgrid',
   'waterLevel',
   'caterpillar', 'squareRing', 'tickring', 'halfgauge', 'arc270', 'wedge', 'dial',
+  'ambient',
 ];
 
 // Designs whose figure fills the whole slot box, so scaling the tile as one unit
 // puts the ring on the rim. Dial, Half Gauge and Wedge stack theirs above an
 // info row, so scaling reaches neither the frame nor the circle's centre.
 export const FRAME_FILLING_DESIGNS: ReadonlySet<GaugeDesignKey> = new Set<GaugeDesignKey>([
-  'caterpillar', 'waterLevel', 'tickring', 'arc270', 'backdrop',
+  'caterpillar', 'waterLevel', 'tickring', 'arc270', 'backdrop', 'ambient',
 ]);

@@ -10,7 +10,7 @@ export const SLOT_SIZE_MIN = 0.5;
 export const SLOT_SIZE_MAX = 2.5;
 
 /** Designs whose ring line weight follows strokeScale. */
-export const STROKE_SCALE_DESIGNS: ReadonlySet<GaugeDesignKey> = new Set<GaugeDesignKey>(['caterpillar', 'arc270']);
+export const STROKE_SCALE_DESIGNS: ReadonlySet<GaugeDesignKey> = new Set<GaugeDesignKey>(['caterpillar', 'arc270', 'ambient']);
 
 export function normalizeSlotSize(value: unknown): number {
   const n = typeof value === 'number' ? value : Number(value);

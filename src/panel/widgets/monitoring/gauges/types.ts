@@ -1,4 +1,5 @@
 import type { GaugeGradient } from '../valueColor';
+import type { GaugeGradientStop } from '../../../theme/gaugeGradient';
 
 /** Monitoring gauge line weight in px. Mirror of --gauge-line-thickness (variables.scss). */
 export const GAUGE_LINE_THICKNESS = 3.2;
@@ -23,6 +24,8 @@ export interface GaugeProps {
   ringGlow?: boolean;
   /** Ring designs draw a thin second ring just inside the main one, painted like the fill. */
   halo?: boolean;
+  /** Live LED colours of the panel's lighting card in strip order, for designs lit by the device around them. */
+  ambient?: readonly GaugeGradientStop[] | null;
 }
 
 export type GaugeDesignKey =
@@ -48,4 +51,5 @@ export type GaugeDesignKey =
   | 'dial'
   | 'tickring'
   | 'backdrop'
-  | 'fill';
+  | 'fill'
+  | 'ambient';
