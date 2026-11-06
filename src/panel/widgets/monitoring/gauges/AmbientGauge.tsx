@@ -78,10 +78,10 @@ function conicOf(
  * LEDs show them, wrap the circle and diffuse inward; a thin light ring carries
  * the value.
  */
-export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, ambientHueLut, ambientGamma, strokeScale = 1 }: GaugeProps) {
+export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, ambientHueLut, ambientGamma, strokeScale = 1, ringInset = 7 }: GaugeProps) {
   const clamped = Math.max(0, Math.min(100, value));
   const stroke = STROKE * strokeScale;
-  const radius = GAUGE_FIGURE_OUTER - 7 - stroke / 2;
+  const radius = GAUGE_FIGURE_OUTER - ringInset - stroke / 2;
   const circumference = 2 * Math.PI * radius;
   const fill = (clamped / 100) * circumference;
   const light: CSSProperties | undefined = ambient && ambient.length > 0 ? { backgroundImage: conicOf(ambient, ambientMatrix, ambientHueLut, ambientGamma) } : undefined;

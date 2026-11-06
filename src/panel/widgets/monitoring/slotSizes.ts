@@ -27,6 +27,15 @@ export function readSlotSizes(config: Record<string, unknown> | undefined, slot:
   };
 }
 
+export const RING_INSET_MIN = -2;
+export const RING_INSET_MAX = 20;
+
+/** `slotN_ringInset`: the ring's distance in from the rim, in gauge units (the figure is 100 across); unset keeps the design's own. */
+export function readRingInset(config: Record<string, unknown> | undefined, slot: number): number | undefined {
+  const n = Number(config?.[`slot${slot}_ringInset`]);
+  return config?.[`slot${slot}_ringInset`] == null || !Number.isFinite(n) ? undefined : Math.min(RING_INSET_MAX, Math.max(RING_INSET_MIN, n));
+}
+
 export function slotSizeVars(sizes: SlotSizes): CSSProperties | undefined {
   if (sizes.valueScale === 1 && sizes.unitScale === 1 && sizes.labelScale === 1) return undefined;
   return {

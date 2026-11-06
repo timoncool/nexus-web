@@ -26,7 +26,7 @@ import { formatSensorValue } from './sensorValueFormat';
 import { chartDomainForScale, DEFAULT_SCALE_MODE, defaultFixedMax, designIsFill, fixedFillPercent, staticMaxForDevice, type ScaleMode } from './perfDomain';
 import { usePanelGaugeGradient, type PanelGaugeGradientValue } from '../common/PanelGaugeGradientContext';
 import { remapGaugeGradientToDomain } from '../../theme/gaugeGradient';
-import { readSlotSizes, slotSizeVars, type SlotSizes } from './slotSizes';
+import { readRingInset, readSlotSizes, slotSizeVars, type SlotSizes } from './slotSizes';
 import { RING_LIGHTING_DESIGNS, readSlotLighting, type SlotLighting } from './slotLighting';
 import { LightingBackdrop } from './LightingBackdrop';
 import { readSlotCycle, useSlotCycle, type SlotCycleEntry } from './slotCycle';
@@ -219,6 +219,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
     labelOverride: widget.config?.[`slot${i}_label`] as string | undefined,
     labelMode: widget.config?.[`slot${i}_labelMode`] as string | undefined,
     sizes: readSlotSizes(widget.config, i),
+    ringInset: readRingInset(widget.config, i),
     wholeNumbers: widget.config?.[`slot${i}_wholeNumbers`] as boolean | undefined,
     lighting: readSlotLighting(widget.config, i),
     hideUnit: widget.config?.[`slot${i}_hideUnit`] === true,
@@ -268,7 +269,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
 
   return (
     <div className={`${styles.performance} ${layoutClass}${fullBleed ? ` ${styles.fullBleed}` : ''}`}>
-      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, cycle }, i) => {
+      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, ringInset, cycle }, i) => {
         const Slot = cycle ? CyclingPerfSlot : PerfSlot;
         return (
           <Slot
@@ -276,6 +277,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
             cycle={cycle ?? undefined}
             hideUnit={hideUnit}
             degreeOnly={degreeOnly}
+            ringInset={ringInset}
             slotIndex={i}
             sensors={sensors}
             fpsSensors={fpsSensors}
@@ -332,6 +334,7 @@ interface PerfSlotProps {
   hideUnit?: boolean;
   /** A temperature reads as a raised ° without the C/F letter. */
   degreeOnly?: boolean;
+  ringInset?: number;
   /** Readings shown in turn in place of device/sensor/caption. */
   cycle?: readonly SlotCycleEntry[];
   tempPrefs?: TempSensorPrefs;
@@ -352,7 +355,7 @@ function CyclingPerfSlot({ cycle, ...props }: PerfSlotProps & { cycle?: readonly
   );
 }
 
-export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
+export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, ringInset, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
   const { monitoringTempUnit, numberFormat, monitoringWholeNumbers } = useUnitPrefs();
   const effectiveSensorName = device === 'network' && !sensorName ? NETWORK_SENSOR_TOTAL : sensorName;
   const sensor = resolveSensor(sensors, fpsSensors, networkSensors, device, effectiveSensorName, tempPrefs, extras);
@@ -431,6 +434,7 @@ export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extra
     historyDomain,
     gradient,
     strokeScale: sizes?.strokeScale ?? 1,
+    ringInset,
     ringGlow: ringLit && lighting.ringGlow,
     halo: ringLit && lighting.haloRing,
     ambient: design === 'ambient' ? gaugeGradient?.lightingStops ?? null : null,
