@@ -15,6 +15,8 @@ export interface SlotLighting {
   /** Ambient Glow brightness and saturation multipliers; 1 shows the LEDs' colours as sent. */
   glowBrightness: number;
   glowSaturation: number;
+  /** Row-major 3x3 colour correction in linear light, from the camera calibration; null leaves colours as sent. */
+  glowMatrix: readonly number[] | null;
 }
 
 export const GLOW_MIN = 0.5;
@@ -30,6 +32,12 @@ export const RING_LIGHTING_DESIGNS: ReadonlySet<GaugeDesignKey> = new Set<GaugeD
 
 const reach = (value: unknown): TextReach => (value === 'value' || value === 'all' ? value : 'off');
 
+function parseMatrix(value: unknown): readonly number[] | null {
+  if (typeof value !== 'string') return null;
+  const m = value.split(',').map(Number);
+  return m.length === 9 && m.every(Number.isFinite) ? m : null;
+}
+
 export function readSlotLighting(config: Record<string, unknown> | undefined, slot: number): SlotLighting {
   const backdrop = Number(config?.[`slot${slot}_backdrop`]);
   return {
@@ -41,6 +49,7 @@ export function readSlotLighting(config: Record<string, unknown> | undefined, sl
     backdrop: Number.isFinite(backdrop) ? Math.min(1, Math.max(0, backdrop)) : 0,
     glowBrightness: glowFactor(config?.[`slot${slot}_glowBrightness`]),
     glowSaturation: glowFactor(config?.[`slot${slot}_glowSaturation`]),
+    glowMatrix: parseMatrix(config?.[`slot${slot}_glowMatrix`]),
   };
 }
 

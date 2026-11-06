@@ -26,6 +26,8 @@ export interface GaugeProps {
   halo?: boolean;
   /** Live LED colours of the panel's lighting card in strip order, for designs lit by the device around them. */
   ambient?: readonly GaugeGradientStop[] | null;
+  /** Row-major 3x3 linear-light correction applied to the ambient colours. */
+  ambientMatrix?: readonly number[] | null;
 }
 
 export type GaugeDesignKey =
