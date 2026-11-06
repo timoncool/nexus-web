@@ -8,8 +8,8 @@ import type { PanelThemeState } from './panelTheme';
 
 const HUE_BINS = 24;
 const CARD_CACHE_MS = 15_000;
-// Each repaint is a video frame to a fan screen, and those frames share the 2.4 GHz air with fan control.
-const EMIT_INTERVAL_MS = 100;
+// Each repaint is a video frame to a screen; 15 a second matches the rate Nexus plays these screens' video at.
+const EMIT_INTERVAL_MS = 66;
 const SMOOTHING = 0.25;
 // Per-LED colours only bridge the stream's frame gaps; the glass shows what the LEDs show.
 const LED_SMOOTHING = 0.7;
