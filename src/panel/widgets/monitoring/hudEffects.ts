@@ -70,3 +70,12 @@ export function hudEffectVars(fx: HudEffects): CSSProperties {
     '--fx-hud': String(fx.hudOpacity),
   } as CSSProperties;
 }
+
+/** Photoshop-style blend of the HUD over the glow; difference reads as a negative. */
+export const HUD_BLENDS = ['normal', 'screen', 'overlay', 'soft-light', 'hard-light', 'difference', 'exclusion', 'multiply', 'color-dodge', 'color', 'luminosity'] as const;
+export type HudBlend = typeof HUD_BLENDS[number];
+
+export function readHudBlend(config: Record<string, unknown> | undefined, slot: number): HudBlend {
+  const v = config?.[`slot${slot}_fxBlend`];
+  return HUD_BLENDS.includes(v as HudBlend) ? v as HudBlend : 'normal';
+}

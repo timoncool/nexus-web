@@ -29,7 +29,7 @@ import { remapGaugeGradientToDomain } from '../../theme/gaugeGradient';
 import { readRingInset, readSlotSizes, slotSizeVars, type SlotSizes } from './slotSizes';
 import { readSlotParts, type SlotParts } from './slotParts';
 import { hudColors, readHudSettings, type HudSettings } from './hudColors';
-import { readHudEffects, type HudEffects } from './hudEffects';
+import { readHudBlend, readHudEffects, type HudBlend, type HudEffects } from './hudEffects';
 import { RING_LIGHTING_DESIGNS, readSlotLighting, type SlotLighting } from './slotLighting';
 import { LightingBackdrop } from './LightingBackdrop';
 import { cycleEntryConfig, readSlotCycle, useSlotCycle, type SlotCycleEntry } from './slotCycle';
@@ -251,7 +251,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
 
   return (
     <div className={`${styles.performance} ${layoutClass}${fullBleed ? ` ${styles.fullBleed}` : ''}`}>
-      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, ringInset, parts, hud, fx, cycle, cycleHold }, i) => {
+      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, ringInset, parts, hud, fx, blend, cycle, cycleHold }, i) => {
         const Slot = cycle ? CyclingPerfSlot : PerfSlot;
         return (
           <Slot
@@ -265,6 +265,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
             parts={parts}
             hud={hud}
             fx={fx}
+            blend={blend}
             slotIndex={i}
             sensors={sensors}
             fpsSensors={fpsSensors}
@@ -319,6 +320,7 @@ function readSlotConfig(config: Record<string, unknown> | undefined, size: Widge
     parts: readSlotParts(config, i),
     hud: readHudSettings(config, i),
     fx: readHudEffects(config, i),
+    blend: readHudBlend(config, i),
     wholeNumbers: config?.[`slot${i}_wholeNumbers`] as boolean | undefined,
     lighting: readSlotLighting(config, i),
     hideUnit: config?.[`slot${i}_hideUnit`] === true,
@@ -357,6 +359,7 @@ interface PerfSlotProps {
   parts?: SlotParts;
   hud?: HudSettings;
   fx?: HudEffects;
+  blend?: HudBlend;
   /** Readings shown in turn in place of device/sensor/caption. */
   cycle?: readonly SlotCycleEntry[];
   tempPrefs?: TempSensorPrefs;
@@ -370,7 +373,7 @@ function CyclingPerfSlot({ cycle, cycleHold, slotFor, ...props }: PerfSlotProps 
   return <PerfSlot {...props} {...slot} />;
 }
 
-export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, ringInset, parts, hud, fx, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
+export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, ringInset, parts, hud, fx, blend, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
   const { monitoringTempUnit, numberFormat, monitoringWholeNumbers } = useUnitPrefs();
   const effectiveSensorName = device === 'network' && !sensorName ? NETWORK_SENSOR_TOTAL : sensorName;
   const sensor = resolveSensor(sensors, fpsSensors, networkSensors, device, effectiveSensorName, tempPrefs, extras);
@@ -458,6 +461,7 @@ export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extra
     parts,
     hud: design === 'ambient' && hud ? hudColorsFor : undefined,
     fx: design === 'ambient' ? fx : undefined,
+    blend: design === 'ambient' ? blend : undefined,
     ringGlow: ringLit && lighting.ringGlow,
     halo: ringLit && lighting.haloRing,
     ambient: design === 'ambient' ? gaugeGradient?.lightingStops ?? null : null,

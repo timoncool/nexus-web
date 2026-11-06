@@ -88,7 +88,7 @@ const sweepOf = (paint: HudPaint | undefined): string | null => {
 };
 const colorOf = (paint: HudPaint | undefined): string | undefined => (paint && 'color' in paint ? paint.color : undefined);
 
-export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, ambientHueLut, ambientGamma, strokeScale = 1, ringInset = 7, parts, hud, fx }: GaugeProps) {
+export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, ambientHueLut, ambientGamma, strokeScale = 1, ringInset = 7, parts, hud, fx, blend }: GaugeProps) {
   const id = useId().replace(/:/g, '');
   const clamped = Math.max(0, Math.min(100, value));
   const stroke = STROKE * strokeScale;
@@ -101,6 +101,7 @@ export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, 
   const trackSweep = sweepOf(hud?.track);
   const rootStyle = {
     ...(fx ? hudEffectVars(fx) : undefined),
+    ...(blend && blend !== 'normal' ? { '--fx-blend': blend } : undefined),
     ...(colorOf(hud?.value) ? { '--hud-value': colorOf(hud?.value) } : undefined),
     ...(colorOf(hud?.unit) ? { '--hud-unit': colorOf(hud?.unit) } : undefined),
     ...(colorOf(hud?.label) ? { '--hud-label': colorOf(hud?.label) } : undefined),

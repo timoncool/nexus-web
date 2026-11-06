@@ -40,6 +40,8 @@ export interface GaugeProps {
   hud?: import('../hudColors').HudColors;
   /** Static glass effects: blur, glow, neon, glass, bevel... */
   fx?: import('../hudEffects').HudEffects;
+  /** How the HUD blends over the glow. */
+  blend?: import('../hudEffects').HudBlend;
 }
 
 export type GaugeDesignKey =

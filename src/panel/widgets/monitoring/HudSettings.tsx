@@ -4,7 +4,7 @@ import { ChipGroup } from '../../../components/common/ChipGroup/ChipGroup';
 import { SettingSlider } from '../../../components/common/SettingRow/SettingRow';
 import { SettingsSection, SettingsSelect } from '../common/SettingsRow/SettingsRow';
 import { HUD_PIECES, HUD_SCHEMES, readHudSettings, type HudRole, type HudScheme } from './hudColors';
-import { HUD_EFFECT_KEYS, HUD_EFFECT_LIMITS, fxKey, readHudEffects, type HudEffects } from './hudEffects';
+import { HUD_BLENDS, HUD_EFFECT_KEYS, HUD_EFFECT_LIMITS, fxKey, readHudBlend, readHudEffects, type HudEffects } from './hudEffects';
 
 interface Props {
   config: Record<string, unknown> | undefined;
@@ -91,6 +91,12 @@ export function HudSettings({ config, slot, onUpdate }: Props) {
         )}
       </SettingsSection>
       <SettingsSection title={t('monitoring.settings.fx.title')}>
+        <SettingsSelect
+          label={t('monitoring.settings.fx.blend')}
+          value={readHudBlend(config, slot)}
+          options={HUD_BLENDS.map(b => ({ value: b, label: t(`monitoring.settings.fx.blend.${b}`) }))}
+          onChange={v => onUpdate({ [key('fxBlend')]: v === 'normal' ? null : v })}
+        />
         {HUD_EFFECT_KEYS.map(name => {
           const [lo, hi, def] = HUD_EFFECT_LIMITS[name];
           const px = PX_EFFECTS.has(name);

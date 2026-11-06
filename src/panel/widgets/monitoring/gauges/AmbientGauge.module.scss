@@ -55,6 +55,11 @@
   opacity: var(--fx-hud, 1);
 }
 
+.svg,
+.center {
+  mix-blend-mode: var(--fx-blend, normal);
+}
+
 .svg {
   position: absolute;
   inset: 0;
