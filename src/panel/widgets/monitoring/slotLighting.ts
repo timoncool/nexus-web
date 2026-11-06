@@ -17,6 +17,8 @@ export interface SlotLighting {
   glowSaturation: number;
   /** Row-major 3x3 colour correction in linear light, from the camera calibration; null leaves colours as sent. */
   glowMatrix: readonly number[] | null;
+  /** Camera-measured hue correction: pairs of [hue the LED shows, hue to send the screen], degrees, ascending. */
+  glowHueLut: readonly (readonly [number, number])[] | null;
 }
 
 export const GLOW_MIN = 0.5;
@@ -38,6 +40,13 @@ function parseMatrix(value: unknown): readonly number[] | null {
   return m.length === 9 && m.every(Number.isFinite) ? m : null;
 }
 
+/** "in:out[:gain];..." from the calibration; the gain field is accepted and ignored. */
+function parseHueLut(value: unknown): readonly (readonly [number, number])[] | null {
+  if (typeof value !== 'string') return null;
+  const pairs = value.split(';').map(p => p.split(':').map(Number)).filter(p => p.length >= 2 && Number.isFinite(p[0]) && Number.isFinite(p[1]));
+  return pairs.length >= 3 ? pairs.map(p => [p[0], p[1]] as const).sort((a, b) => a[0] - b[0]) : null;
+}
+
 export function readSlotLighting(config: Record<string, unknown> | undefined, slot: number): SlotLighting {
   const backdrop = Number(config?.[`slot${slot}_backdrop`]);
   return {
@@ -50,6 +59,7 @@ export function readSlotLighting(config: Record<string, unknown> | undefined, sl
     glowBrightness: glowFactor(config?.[`slot${slot}_glowBrightness`]),
     glowSaturation: glowFactor(config?.[`slot${slot}_glowSaturation`]),
     glowMatrix: parseMatrix(config?.[`slot${slot}_glowMatrix`]),
+    glowHueLut: parseHueLut(config?.[`slot${slot}_glowHueLut`]),
   };
 }
 

@@ -28,6 +28,8 @@ export interface GaugeProps {
   ambient?: readonly GaugeGradientStop[] | null;
   /** Row-major 3x3 linear-light correction applied to the ambient colours. */
   ambientMatrix?: readonly number[] | null;
+  /** Hue correction pairs [LED hue, hue to send], applied to the ambient colours. */
+  ambientHueLut?: readonly (readonly [number, number])[] | null;
 }
 
 export type GaugeDesignKey =

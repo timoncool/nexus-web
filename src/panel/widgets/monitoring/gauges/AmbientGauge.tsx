@@ -18,8 +18,42 @@ function corrected(hex: string, m: readonly number[]): string {
   }).join('')}`;
 }
 
-function conicOf(stops: NonNullable<GaugeProps['ambient']>, matrix: GaugeProps['ambientMatrix']): string {
-  const parts = stops.map(s => `${matrix ? corrected(s.color, matrix) : s.color} ${(s.at * 100).toFixed(1)}%`);
+/** Where a hue lands on a circular piecewise-linear lookup. */
+function mapHue(h: number, lut: readonly (readonly [number, number])[]): number {
+  const n = lut.length;
+  for (let i = 0; i < n; i++) {
+    const [x0, y0] = lut[i];
+    const [x1raw, y1raw] = lut[(i + 1) % n];
+    const x1 = i + 1 < n ? x1raw : x1raw + 360;
+    let y1 = i + 1 < n ? y1raw : y1raw + 360;
+    if (y1 < y0 - 180) y1 += 360;
+    const hh = h < x0 ? h + 360 : h;
+    if (hh >= x0 && hh <= x1) return ((y0 + (y1 - y0) * ((hh - x0) / (x1 - x0))) % 360 + 360) % 360;
+  }
+  return h;
+}
+
+/** The hue the screen must be sent for it to look like the LED, per the camera hue table; saturation and value stay. */
+function hueCorrected(hex: string, lut: readonly (readonly [number, number])[]): string {
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const d = max - min;
+  if (d < 1e-3) return hex;
+  let h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  h = ((h * 60) % 360 + 360) % 360;
+  const nh = mapHue(h, lut) / 60;
+  const s = d / max;
+  const f = (k: number) => {
+    const kk = (k + nh) % 6;
+    return max - max * s * Math.max(0, Math.min(kk, 4 - kk, 1));
+  };
+  return `#${[f(5), f(3), f(1)].map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('')}`;
+}
+
+function conicOf(stops: NonNullable<GaugeProps['ambient']>, matrix: GaugeProps['ambientMatrix'], lut: GaugeProps['ambientHueLut']): string {
+  const fix = (c: string) => (lut ? hueCorrected(c, lut) : matrix ? corrected(c, matrix) : c);
+  const parts = stops.map(s => `${fix(s.color)} ${(s.at * 100).toFixed(1)}%`);
   // Closing on the first colour keeps the seam at 12 o'clock invisible.
   return `conic-gradient(from 0deg, ${parts.join(', ')}, ${parts[0].split(' ')[0]} 100%)`;
 }
@@ -29,13 +63,13 @@ function conicOf(stops: NonNullable<GaugeProps['ambient']>, matrix: GaugeProps['
  * LEDs show them, wrap the circle and diffuse inward; a thin light ring carries
  * the value.
  */
-export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, strokeScale = 1 }: GaugeProps) {
+export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, ambientHueLut, strokeScale = 1 }: GaugeProps) {
   const clamped = Math.max(0, Math.min(100, value));
   const stroke = STROKE * strokeScale;
   const radius = GAUGE_FIGURE_OUTER - 7 - stroke / 2;
   const circumference = 2 * Math.PI * radius;
   const fill = (clamped / 100) * circumference;
-  const light: CSSProperties | undefined = ambient && ambient.length > 0 ? { backgroundImage: conicOf(ambient, ambientMatrix) } : undefined;
+  const light: CSSProperties | undefined = ambient && ambient.length > 0 ? { backgroundImage: conicOf(ambient, ambientMatrix, ambientHueLut) } : undefined;
 
   return (
     <div className={styles.ambient}>
