@@ -4112,6 +4112,8 @@
   "monitoring.settings.design": "Дизайн",
   "monitoring.settings.designSimple": "Подпись + значение",
   "monitoring.settings.device": "Устройство",
+  "monitoring.settings.glowBrightness": "Яркость свечения",
+  "monitoring.settings.glowSaturation": "Насыщенность свечения",
   "monitoring.settings.gradientReset": "Сбросить цвета",
   "monitoring.settings.haloRing": "Дополнительное светящееся кольцо",
   "monitoring.settings.label": "Подпись",

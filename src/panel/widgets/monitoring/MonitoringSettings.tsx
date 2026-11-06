@@ -48,7 +48,7 @@ import { ChipGroup } from '../../../components/common/ChipGroup/ChipGroup';
 import { DesktopOnlyBadge } from '../../../components/common/DesktopOnlyBadge/DesktopOnlyBadge';
 import { SettingSlider } from '../../../components/common/SettingRow/SettingRow';
 import { LightingAccentSelect } from './LightingAccentSelect';
-import { RING_LIGHTING_DESIGNS, readSlotLighting } from './slotLighting';
+import { GLOW_MAX, GLOW_MIN, RING_LIGHTING_DESIGNS, readSlotLighting } from './slotLighting';
 import { SLOT_SIZE_MAX, SLOT_SIZE_MIN, SLOT_SIZE_PARTS, STROKE_SCALE_DESIGNS, readSlotSizes } from './slotSizes';
 import styles from './MonitoringSettings.module.scss';
 
@@ -797,6 +797,34 @@ export function MonitoringSettings({ widget, surface, desktopEditor, onUpdate, s
 
           <SettingsSection title={t('monitoring.settings.colors')}>
             <LightingAccentSelect />
+            {lightingDevice && activeConfig.design === 'ambient' && (
+              <>
+                <SettingSlider
+                  editable
+                  trackFill
+                  label={t('monitoring.settings.glowBrightness')}
+                  value={Math.round(slotLighting.glowBrightness * 100)}
+                  min={GLOW_MIN * 100}
+                  max={GLOW_MAX * 100}
+                  step={5}
+                  formatValue={v => `${v}%`}
+                  onChange={(v, commit) => { if (commit) onUpdate({ [`slot${activeSlot}_glowBrightness`]: v === 100 ? null : v / 100 }); }}
+                  onCommit={v => onUpdate({ [`slot${activeSlot}_glowBrightness`]: v === 100 ? null : v / 100 })}
+                />
+                <SettingSlider
+                  editable
+                  trackFill
+                  label={t('monitoring.settings.glowSaturation')}
+                  value={Math.round(slotLighting.glowSaturation * 100)}
+                  min={GLOW_MIN * 100}
+                  max={GLOW_MAX * 100}
+                  step={5}
+                  formatValue={v => `${v}%`}
+                  onChange={(v, commit) => { if (commit) onUpdate({ [`slot${activeSlot}_glowSaturation`]: v === 100 ? null : v / 100 }); }}
+                  onCommit={v => onUpdate({ [`slot${activeSlot}_glowSaturation`]: v === 100 ? null : v / 100 })}
+                />
+              </>
+            )}
             {lightingDevice && (
               <>
                 {RING_LIGHTING_DESIGNS.has(activeConfig.design) && (

@@ -4073,6 +4073,8 @@
   "monitoring.settings.design": "디자인",
   "monitoring.settings.designSimple": "라벨 + 값",
   "monitoring.settings.device": "장치",
+  "monitoring.settings.glowBrightness": "Glow brightness",
+  "monitoring.settings.glowSaturation": "Glow saturation",
   "monitoring.settings.gradientReset": "색상 초기화",
   "monitoring.settings.haloRing": "Extra glowing ring",
   "monitoring.settings.label": "라벨",

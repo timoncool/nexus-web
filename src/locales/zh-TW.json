@@ -4073,6 +4073,8 @@
   "monitoring.settings.design": "設計",
   "monitoring.settings.designSimple": "標籤 + 值",
   "monitoring.settings.device": "裝置",
+  "monitoring.settings.glowBrightness": "Glow brightness",
+  "monitoring.settings.glowSaturation": "Glow saturation",
   "monitoring.settings.gradientReset": "重設顏色",
   "monitoring.settings.haloRing": "Extra glowing ring",
   "monitoring.settings.label": "標籤",

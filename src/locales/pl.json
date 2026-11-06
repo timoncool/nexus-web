@@ -4112,6 +4112,8 @@
   "monitoring.settings.design": "Wygląd",
   "monitoring.settings.designSimple": "Etykieta + wartość",
   "monitoring.settings.device": "Urządzenie",
+  "monitoring.settings.glowBrightness": "Glow brightness",
+  "monitoring.settings.glowSaturation": "Glow saturation",
   "monitoring.settings.gradientReset": "Resetuj kolory",
   "monitoring.settings.haloRing": "Extra glowing ring",
   "monitoring.settings.label": "Etykieta",

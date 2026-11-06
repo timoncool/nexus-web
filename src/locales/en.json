@@ -4073,6 +4073,8 @@
   "monitoring.settings.design": "Design",
   "monitoring.settings.designSimple": "Label + Value",
   "monitoring.settings.device": "Device",
+  "monitoring.settings.glowBrightness": "Glow brightness",
+  "monitoring.settings.glowSaturation": "Glow saturation",
   "monitoring.settings.gradientReset": "Reset colors",
   "monitoring.settings.haloRing": "Extra glowing ring",
   "monitoring.settings.label": "Label",

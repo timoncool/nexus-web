@@ -17,7 +17,7 @@
   position: absolute;
   inset: -12%;
   background-image: radial-gradient(circle, var(--panel-accent) 0%, var(--panel-accent) 100%);
-  filter: blur(14px);
+  filter: blur(14px) brightness(var(--glow-brightness, 1)) saturate(var(--glow-saturation, 1));
   transform: scale(1.08);
 }
 

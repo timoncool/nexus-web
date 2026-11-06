@@ -4073,6 +4073,8 @@
   "monitoring.settings.design": "デザイン",
   "monitoring.settings.designSimple": "ラベル + 値",
   "monitoring.settings.device": "デバイス",
+  "monitoring.settings.glowBrightness": "Glow brightness",
+  "monitoring.settings.glowSaturation": "Glow saturation",
   "monitoring.settings.gradientReset": "色をリセット",
   "monitoring.settings.haloRing": "Extra glowing ring",
   "monitoring.settings.label": "ラベル",

@@ -4112,6 +4112,8 @@
   "monitoring.settings.design": "Design",
   "monitoring.settings.designSimple": "Popisek + hodnota",
   "monitoring.settings.device": "Zařízení",
+  "monitoring.settings.glowBrightness": "Glow brightness",
+  "monitoring.settings.glowSaturation": "Glow saturation",
   "monitoring.settings.gradientReset": "Obnovit barvy",
   "monitoring.settings.haloRing": "Extra glowing ring",
   "monitoring.settings.label": "Popisek",

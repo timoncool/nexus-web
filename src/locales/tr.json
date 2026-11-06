@@ -4073,6 +4073,8 @@
   "monitoring.settings.design": "Tasarım",
   "monitoring.settings.designSimple": "Etiket + değer",
   "monitoring.settings.device": "Cihaz",
+  "monitoring.settings.glowBrightness": "Glow brightness",
+  "monitoring.settings.glowSaturation": "Glow saturation",
   "monitoring.settings.gradientReset": "Renkleri sıfırla",
   "monitoring.settings.haloRing": "Extra glowing ring",
   "monitoring.settings.label": "Etiket",

@@ -4073,6 +4073,8 @@
   "monitoring.settings.design": "Design",
   "monitoring.settings.designSimple": "Etichetta + valore",
   "monitoring.settings.device": "Dispositivo",
+  "monitoring.settings.glowBrightness": "Glow brightness",
+  "monitoring.settings.glowSaturation": "Glow saturation",
   "monitoring.settings.gradientReset": "Ripristina colori",
   "monitoring.settings.haloRing": "Extra glowing ring",
   "monitoring.settings.label": "Etichetta",

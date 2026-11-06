@@ -406,7 +406,10 @@ export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extra
     halo: ringLit && lighting.haloRing,
     ambient: design === 'ambient' ? gaugeGradient?.lightingStops ?? null : null,
   };
-  const sizeStyle = sizes ? slotSizeVars(sizes) : undefined;
+  const sizeVars = sizes ? slotSizeVars(sizes) : undefined;
+  const sizeStyle = lighting && design === 'ambient' && (lighting.glowBrightness !== 1 || lighting.glowSaturation !== 1)
+    ? { ...sizeVars, '--glow-brightness': String(lighting.glowBrightness), '--glow-saturation': String(lighting.glowSaturation) } as CSSProperties
+    : sizeVars;
   const lightingAttrs = lighting ? {
     'data-text-lighting': lighting.textColor === 'off' ? undefined : lighting.textColor,
     'data-text-glow': lighting.textGlow === 'off' ? undefined : lighting.textGlow,
