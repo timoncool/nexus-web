@@ -8,7 +8,8 @@ import type { PanelThemeState } from './panelTheme';
 
 const HUE_BINS = 24;
 const CARD_CACHE_MS = 15_000;
-const EMIT_INTERVAL_MS = 40;
+// Each repaint is a video frame to a fan screen, and those frames share the 2.4 GHz air with fan control.
+const EMIT_INTERVAL_MS = 100;
 const SMOOTHING = 0.25;
 // Per-LED colours only bridge the stream's frame gaps; the glass shows what the LEDs show.
 const LED_SMOOTHING = 0.7;
@@ -156,6 +157,7 @@ export function useLightingLive(spec: string | null): LightingLive {
     let accent: Rgb | null = null;
     let leds: Rgb[] = [];
     let lastEmit = 0;
+    let lastKey = '';
     return subscribeLedFrame(f => {
       const all = f.devices?.get(frameIndex);
       if (!all) return;
@@ -182,7 +184,11 @@ export function useLightingLive(spec: string | null): LightingLive {
         at: count === 1 ? 0 : i / (count - 1),
         color: toHex(led),
       }));
-      setState({ accent: accent ? toHex(accent) : null, stops });
+      const accentHex = accent ? toHex(accent) : null;
+      const key = `${accentHex}|${stops.map(st => st.color).join(',')}`;
+      if (key === lastKey) return;
+      lastKey = key;
+      setState({ accent: accentHex, stops });
     });
   }, [enabled, live, frameIndex, from, to]);
 
