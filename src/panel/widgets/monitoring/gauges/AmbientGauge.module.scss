@@ -2,6 +2,7 @@
 
 .ambient {
   position: relative;
+  container-type: size;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -66,6 +67,7 @@
   letter-spacing: -0.02em;
   line-height: 1;
   text-box: trim-both cap alphabetic;
+  max-width: 52cqw;
   color: #fff;
   text-shadow: 0 1px 2px rgb(0 0 0 / 45%), 0 2px 14px rgb(0 0 0 / 50%);
 
@@ -77,6 +79,7 @@
     position: absolute;
     left: 100%;
     bottom: 0;
+    transform: var(--part-unit, none);
   }
 }
 
@@ -86,7 +89,7 @@
 }
 
 .label {
-  max-width: 100%;
+  max-width: 80cqw;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: pre;
@@ -98,4 +101,9 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-shadow: 0 1px 2px rgb(0 0 0 / 45%), 0 1px 10px rgb(0 0 0 / 50%);
+}
+
+.part {
+  display: block;
+  transform-origin: center;
 }

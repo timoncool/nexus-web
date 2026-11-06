@@ -3,6 +3,7 @@ import { GaugeValue } from './GaugeValue';
 import { GAUGE_FIGURE_OUTER } from './types';
 import type { GaugeProps } from './types';
 import styles from './AmbientGauge.module.scss';
+import { partStyle, ringTransform } from '../slotParts';
 
 const STROKE = 3;
 
@@ -78,7 +79,7 @@ function conicOf(
  * LEDs show them, wrap the circle and diffuse inward; a thin light ring carries
  * the value.
  */
-export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, ambientHueLut, ambientGamma, strokeScale = 1, ringInset = 7 }: GaugeProps) {
+export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, ambientHueLut, ambientGamma, strokeScale = 1, ringInset = 7, parts }: GaugeProps) {
   const clamped = Math.max(0, Math.min(100, value));
   const stroke = STROKE * strokeScale;
   const radius = GAUGE_FIGURE_OUTER - ringInset - stroke / 2;
@@ -90,6 +91,7 @@ export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, 
     <div className={styles.ambient}>
       <div className={styles.light} style={light} aria-hidden="true" />
       <svg className={styles.svg} viewBox="0 0 100 100" aria-hidden="true">
+        <g data-gauge-part="ring" transform={ringTransform(parts?.ring)}>
         <circle cx="50" cy="50" r={radius} className={styles.track} style={{ strokeWidth: stroke }} />
         <circle
           cx="50"
@@ -100,10 +102,13 @@ export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, 
           strokeDasharray={`${fill} ${circumference - fill}`}
           transform="rotate(-90 50 50)"
         />
+        </g>
       </svg>
-      <div className={styles.center}>
-        <GaugeValue formatted={formatted} className={styles.value} />
-        {label && <span className={`${styles.label} panel-gauge-label`}>{label}</span>}
+      <div className={styles.center} style={parts?.unit ? { '--part-unit': partStyle(parts.unit) } as CSSProperties : undefined}>
+        <span className={styles.part} data-gauge-part="value" style={{ transform: partStyle(parts?.value) }}>
+          <GaugeValue formatted={formatted} className={styles.value} />
+        </span>
+        {label && <span className={`${styles.label} ${styles.part} panel-gauge-label`} data-gauge-part="label" style={{ transform: partStyle(parts?.label) }}>{label}</span>}
       </div>
     </div>
   );

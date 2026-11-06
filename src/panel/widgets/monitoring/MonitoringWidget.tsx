@@ -27,6 +27,7 @@ import { chartDomainForScale, DEFAULT_SCALE_MODE, defaultFixedMax, designIsFill,
 import { usePanelGaugeGradient, type PanelGaugeGradientValue } from '../common/PanelGaugeGradientContext';
 import { remapGaugeGradientToDomain } from '../../theme/gaugeGradient';
 import { readRingInset, readSlotSizes, slotSizeVars, type SlotSizes } from './slotSizes';
+import { readSlotParts, type SlotParts } from './slotParts';
 import { RING_LIGHTING_DESIGNS, readSlotLighting, type SlotLighting } from './slotLighting';
 import { LightingBackdrop } from './LightingBackdrop';
 import { cycleEntryConfig, readSlotCycle, useSlotCycle, type SlotCycleEntry } from './slotCycle';
@@ -203,6 +204,7 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
   const slotConfigs = Array.from({ length: count }, (_, i) => ({
     ...readSlotConfig(widget.config, widget.size, layout, i),
     cycle: readSlotCycle(widget.config, i),
+    cycleHold: widget.config?.[`slot${i}_cycleHold`] as number | null | undefined,
   }));
   const slotDevices = slotConfigs.flatMap(slot => slot.cycle ? slot.cycle.map(entry => entry.device) : [slot.device]);
   const microDevice = widget.config?.micro_device as DeviceKey | undefined;
@@ -247,16 +249,18 @@ export function MonitoringWidget({ widget, selectedSlot, onSelectSlot }: WidgetP
 
   return (
     <div className={`${styles.performance} ${layoutClass}${fullBleed ? ` ${styles.fullBleed}` : ''}`}>
-      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, ringInset, cycle }, i) => {
+      {slotConfigs.map(({ device, sensorName, design, scale, fixedMin, fixedMax, valueColor, valueColorReverse, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, ringInset, parts, cycle, cycleHold }, i) => {
         const Slot = cycle ? CyclingPerfSlot : PerfSlot;
         return (
           <Slot
             key={cycle ? `${i}-cycle` : `${i}-${device}-${sensorName}`}
             cycle={cycle ?? undefined}
+            cycleHold={cycleHold}
             slotFor={cycle ? (entry: SlotCycleEntry) => readSlotConfig(cycleEntryConfig(widget.config, i, entry), widget.size, layout, i) : undefined}
             hideUnit={hideUnit}
             degreeOnly={degreeOnly}
             ringInset={ringInset}
+            parts={parts}
             slotIndex={i}
             sensors={sensors}
             fpsSensors={fpsSensors}
@@ -308,6 +312,7 @@ function readSlotConfig(config: Record<string, unknown> | undefined, size: Widge
     labelMode: config?.[`slot${i}_labelMode`] as string | undefined,
     sizes: readSlotSizes(config, i),
     ringInset: readRingInset(config, i),
+    parts: readSlotParts(config, i),
     wholeNumbers: config?.[`slot${i}_wholeNumbers`] as boolean | undefined,
     lighting: readSlotLighting(config, i),
     hideUnit: config?.[`slot${i}_hideUnit`] === true,
@@ -343,6 +348,7 @@ interface PerfSlotProps {
   /** A temperature reads as a raised ° without the C/F letter. */
   degreeOnly?: boolean;
   ringInset?: number;
+  parts?: SlotParts;
   /** Readings shown in turn in place of device/sensor/caption. */
   cycle?: readonly SlotCycleEntry[];
   tempPrefs?: TempSensorPrefs;
@@ -350,13 +356,13 @@ interface PerfSlotProps {
   onSelect?: () => void;
 }
 
-function CyclingPerfSlot({ cycle, slotFor, ...props }: PerfSlotProps & { cycle?: readonly SlotCycleEntry[]; slotFor?: (entry: SlotCycleEntry) => ReturnType<typeof readSlotConfig> }) {
-  const entry = useSlotCycle(cycle ?? []);
+function CyclingPerfSlot({ cycle, cycleHold, slotFor, ...props }: PerfSlotProps & { cycle?: readonly SlotCycleEntry[]; cycleHold?: number | null; slotFor?: (entry: SlotCycleEntry) => ReturnType<typeof readSlotConfig> }) {
+  const entry = useSlotCycle(cycle ?? [], cycleHold);
   const slot = slotFor?.(entry);
   return <PerfSlot {...props} {...slot} />;
 }
 
-export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, ringInset, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
+export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extras, device, sensorName, design, scale = DEFAULT_SCALE_MODE, fixedMin, fixedMax, valueColor = false, valueColorReverse, gaugeGradient, labelOverride, labelMode, sizes, wholeNumbers, lighting, hideUnit, degreeOnly, ringInset, parts, tempPrefs, selected = false, onSelect }: PerfSlotProps) {
   const { monitoringTempUnit, numberFormat, monitoringWholeNumbers } = useUnitPrefs();
   const effectiveSensorName = device === 'network' && !sensorName ? NETWORK_SENSOR_TOTAL : sensorName;
   const sensor = resolveSensor(sensors, fpsSensors, networkSensors, device, effectiveSensorName, tempPrefs, extras);
@@ -436,6 +442,7 @@ export function PerfSlot({ slotIndex, sensors, fpsSensors, networkSensors, extra
     gradient,
     strokeScale: sizes?.strokeScale ?? 1,
     ringInset,
+    parts,
     ringGlow: ringLit && lighting.ringGlow,
     halo: ringLit && lighting.haloRing,
     ambient: design === 'ambient' ? gaugeGradient?.lightingStops ?? null : null,

@@ -46,7 +46,7 @@ export function GaugeValue({ formatted, className, clipTopPercent, textFill, ali
         }}
       >
         <StableDigits text={parts.value} />
-        {parts.unit && <span className="panel-gauge-unit">{parts.unit}</span>}
+        {parts.unit && <span className="panel-gauge-unit" data-gauge-part="unit">{parts.unit}</span>}
       </span>
     </span>
   );

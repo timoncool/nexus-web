@@ -56,13 +56,15 @@ export function cycleEntryConfig(config: Record<string, unknown> | undefined, sl
 }
 
 /** The entry on screen now; each one stays for its own seconds before the next. */
-export function useSlotCycle(entries: readonly SlotCycleEntry[]): SlotCycleEntry {
+export function useSlotCycle(entries: readonly SlotCycleEntry[], hold?: number | null): SlotCycleEntry {
   const [index, setIndex] = useState(0);
-  const at = index % entries.length;
+  const held = hold != null && hold >= 0 && hold < entries.length ? hold : null;
+  const at = held ?? index % entries.length;
   const stay = entries[at].seconds;
   useEffect(() => {
+    if (held !== null) return undefined;
     const timer = setTimeout(() => setIndex(i => (i + 1) % entries.length), stay * 1000);
     return () => clearTimeout(timer);
-  }, [at, stay, entries.length]);
+  }, [at, stay, entries.length, held]);
   return entries[at];
 }

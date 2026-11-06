@@ -4,7 +4,7 @@ import type { AppManifest } from '../types';
 import { MonitoringWidget } from './MonitoringWidget';
 import { MonitoringPreview } from './MonitoringPreview';
 import { MonitoringTouch } from './MonitoringTouch';
-import { MonitoringSettings } from './MonitoringSettings';
+import { MonitoringSettingsWithCycle } from './SlotCycleSettings';
 
 // Code-split: Page only loads when the dashboard navigates into the
 // immersive view. Widget + Touch stay eager so panel cells render
@@ -27,7 +27,7 @@ export const monitoringApp: AppManifest = {
   Preview: MonitoringPreview,
   Page: MonitoringPage,
   Touch: MonitoringTouch,
-  Settings: MonitoringSettings,
+  Settings: MonitoringSettingsWithCycle,
   resolveInitialSelection: ({ point, widget }) => {
     // MonitoringWidget stamps `data-monitoring-slot-index` on each slot
     // div/button (multi-slot layouts only; micro has no per-slot selection).

@@ -34,6 +34,8 @@ export interface GaugeProps {
   ambientGamma?: number | null;
   /** The ring's distance in from the rim, gauge units; unset keeps the design's own. */
   ringInset?: number;
+  /** Per-piece offset, scale and turn from the layout editor. */
+  parts?: import('../slotParts').SlotParts;
 }
 
 export type GaugeDesignKey =
