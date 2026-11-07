@@ -11,6 +11,7 @@ import {
   unbindLianLiWirelessFan,
   identifyLianLiWirelessFan,
   setLianLiWirelessLockBound,
+  setLianLiWirelessAirCount,
   type LianLiWirelessFan,
   type LianLiFansState,
 } from '../../../api/lianli-wireless';
@@ -260,6 +261,20 @@ export function LianLiWirelessFansTab({ state, refresh, panelOpener, wired = fal
     }
   }, [refresh, clearLockPending]);
 
+  const airSupported = !wired && loaded && typeof state.airCount === 'boolean';
+  const [airPending, setAirPending] = useState<boolean | null>(null);
+  const airOn = airPending ?? (airSupported && state.airCount === true);
+  const onAirChange = useCallback(async (next: boolean) => {
+    setAirPending(next);
+    await setLianLiWirelessAirCount(next).catch(() => false);
+    try {
+      await refresh();
+    } catch {
+      // The next poll re-reads the state.
+    }
+    if (aliveRef.current) setAirPending(null);
+  }, [refresh]);
+
   return (
     <>
       {/* HoverTooltip never opens on touch, so the lock reason is also written out. */}
@@ -290,6 +305,25 @@ export function LianLiWirelessFansTab({ state, refresh, panelOpener, wired = fal
             ariaLabel={t('devices.lianli-wireless.lockBoundDevices')}
             disabled={!loaded || lockSaving || lockPending !== null}
           />
+        )}
+        {airSupported && (
+          <SettingToggle
+            label={t('devices.lianli-wireless.airCount')}
+            description={t('devices.lianli-wireless.airCountHint')}
+            checked={airOn}
+            onChange={next => { void onAirChange(next); }}
+            ariaLabel={t('devices.lianli-wireless.airCount')}
+            disabled={airPending !== null}
+          />
+        )}
+        {airSupported && airOn && (
+          <SettingRow label={t('devices.lianli-wireless.airPerMinute')}>
+            <span className={styles.rowValueMono}>
+              {state.airPayloadsPerMinute == null
+                ? t('devices.lianli-wireless.airCounting')
+                : t('devices.lianli-wireless.airValue', { perMinute: state.airPayloadsPerMinute, peak: state.airPeakPerSecond ?? 0 })}
+            </span>
+          </SettingRow>
         )}
       </SettingsSection>}
 

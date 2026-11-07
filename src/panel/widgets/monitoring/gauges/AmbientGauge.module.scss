@@ -89,7 +89,7 @@
 .fill {
   stroke: var(--hud-ring, #fff);
   filter: drop-shadow(0 0 calc(1.5px * var(--fx-ring-glow, 1)) var(--hud-ring, rgb(255 255 255 / 90%)));
-  transition: stroke-dasharray 0.9s ease-out;
+  transition: stroke-dasharray 0.9s steps(9, end);
 
   @media (prefers-reduced-motion: reduce) {
     transition: none;

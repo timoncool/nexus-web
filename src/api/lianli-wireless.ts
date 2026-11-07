@@ -73,6 +73,11 @@ export interface LianLiWirelessState {
   txFirmwareVersion: number;
   /** Re-bind owned chains that drop or get bound elsewhere. Absent on an older service, which has no lock. */
   lockBoundDevices?: boolean;
+  /** RF payload count, on only while debugging the radio. Absent on an older service. */
+  airCount?: boolean;
+  /** RF payloads sent over the last full minute and its busiest second; null while the count is off or not a minute old. */
+  airPayloadsPerMinute?: number | null;
+  airPeakPerSecond?: number | null;
   fans: LianLiWirelessFan[];
 }
 
@@ -102,6 +107,10 @@ export async function unbindLianLiWirelessFan(mac: string): Promise<boolean> {
 
 export async function setLianLiWirelessLockBound(enabled: boolean): Promise<boolean> {
   return isOk(await putService<OkResponse>('/devices/lianli-wireless/lock', { enabled }));
+}
+
+export async function setLianLiWirelessAirCount(enabled: boolean): Promise<boolean> {
+  return isOk(await putService<OkResponse>('/devices/lianli-wireless/air-count', { enabled }));
 }
 
 export async function identifyLianLiWirelessFan(mac: string): Promise<boolean> {
