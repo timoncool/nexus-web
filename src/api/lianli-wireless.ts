@@ -78,6 +78,10 @@ export interface LianLiWirelessState {
   /** RF payloads sent over the last full minute and its busiest second; null while the count is off or not a minute old. */
   airPayloadsPerMinute?: number | null;
   airPeakPerSecond?: number | null;
+  /** Rolling RGB window frame length in RF clock ticks (53 = 30 fps). Absent on an older service. */
+  rgbFrameTicks?: number;
+  /** RF payloads a second the late resend passes may fill the air up to. */
+  lateAirBudget?: number;
   fans: LianLiWirelessFan[];
 }
 
@@ -113,6 +117,15 @@ export async function setLianLiWirelessLockBound(enabled: boolean): Promise<bool
 export async function setLianLiWirelessChannel(channel: number): Promise<boolean> {
   return isOk(await putService<OkResponse>('/devices/lianli-wireless/channel', { channel }));
 }
+
+export async function setLianLiWirelessRadioTuning(patch: { rgbFrameTicks?: number; lateAirBudget?: number }): Promise<boolean> {
+  return isOk(await putService<OkResponse>('/devices/lianli-wireless/radio-tuning', patch));
+}
+
+/** Rolling RGB window frame lengths offered, in RF clock ticks of 0.625 ms. */
+export const LIANLI_RGB_FRAME_TICKS: readonly number[] = [53, 80, 106, 160];
+export const lianLiFrameFps = (ticks: number) => Math.round(1600 / ticks);
+export const LIANLI_LATE_AIR_BUDGETS: readonly number[] = [90, 120, 150, 180];
 
 /** The channels the dongle firmware accepts; channel k sits at 2402 + 2k MHz. */
 export const LIANLI_WIRELESS_CHANNELS: readonly number[] = [8, ...Array.from({ length: 20 }, (_, i) => i * 2 + 1)];

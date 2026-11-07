@@ -13,6 +13,10 @@ import {
   setLianLiWirelessLockBound,
   setLianLiWirelessAirCount,
   setLianLiWirelessChannel,
+  setLianLiWirelessRadioTuning,
+  LIANLI_RGB_FRAME_TICKS,
+  LIANLI_LATE_AIR_BUDGETS,
+  lianLiFrameFps,
   LIANLI_WIRELESS_CHANNELS,
   lianLiChannelMhz,
   type LianLiWirelessFan,
@@ -294,6 +298,21 @@ export function LianLiWirelessFansTab({ state, refresh, panelOpener, wired = fal
     if (aliveRef.current) setChannelPending(null);
   }, [refresh]);
 
+  const tuningSupported = !wired && loaded && typeof state.rgbFrameTicks === 'number' && typeof state.lateAirBudget === 'number';
+  const [tuningPending, setTuningPending] = useState(false);
+  const onTuningChange = useCallback(async (patch: { rgbFrameTicks?: number; lateAirBudget?: number }) => {
+    setTuningPending(true);
+    await setLianLiWirelessRadioTuning(patch).catch(() => false);
+    try {
+      await refresh();
+    } catch {
+      // The next poll re-reads the state.
+    }
+    if (aliveRef.current) setTuningPending(false);
+  }, [refresh]);
+  const withCurrent = (list: readonly number[], current: number | undefined) =>
+    current === undefined || list.includes(current) ? list : [...list, current].sort((a, b) => a - b);
+
   return (
     <>
       {/* HoverTooltip never opens on touch, so the lock reason is also written out. */}
@@ -334,6 +353,32 @@ export function LianLiWirelessFansTab({ state, refresh, panelOpener, wired = fal
             onChange={next => { void onLockChange(next); }}
             ariaLabel={t('devices.lianli-wireless.lockBoundDevices')}
             disabled={!loaded || lockSaving || lockPending !== null}
+          />
+        )}
+        {tuningSupported && (
+          <SettingSelect
+            label={t('devices.lianli-wireless.rgbFrameRate')}
+            description={t('devices.lianli-wireless.rgbFrameRateHint')}
+            value={String(state.rgbFrameTicks)}
+            options={withCurrent(LIANLI_RGB_FRAME_TICKS, state.rgbFrameTicks).map(ticks => ({
+              value: String(ticks),
+              label: t('devices.lianli-wireless.rgbFrameRateOption', { fps: lianLiFrameFps(ticks) }),
+            }))}
+            onChange={v => { void onTuningChange({ rgbFrameTicks: Number(v) }); }}
+            disabled={tuningPending}
+          />
+        )}
+        {tuningSupported && (
+          <SettingSelect
+            label={t('devices.lianli-wireless.lateAirBudget')}
+            description={t('devices.lianli-wireless.lateAirBudgetHint')}
+            value={String(state.lateAirBudget)}
+            options={withCurrent(LIANLI_LATE_AIR_BUDGETS, state.lateAirBudget).map(budget => ({
+              value: String(budget),
+              label: t('devices.lianli-wireless.lateAirBudgetOption', { budget }),
+            }))}
+            onChange={v => { void onTuningChange({ lateAirBudget: Number(v) }); }}
+            disabled={tuningPending}
           />
         )}
         {airSupported && (
