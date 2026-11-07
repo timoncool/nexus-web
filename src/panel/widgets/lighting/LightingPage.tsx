@@ -7,6 +7,7 @@ import {
   fetchAnimateDefaults, cachedAnimateDefaults,
   setLightingDevicePower, setLightingDeviceControlled,
   renameLightingDevice, saveLightingGroups, saveLightingStacks, saveDeviceLayout, setLightingSelectionLock,
+  fetchOpenRgbOwners, setOpenRgbOwner, type OpenRgbOwners,
   fetchScreenEffect, setScreenEffect, fetchMediaEffect, setMediaEffect, fetchLedMap,
   fetchCurrentSync, fetchAvailableMappings,
   setLightingPaused,
@@ -288,6 +289,10 @@ export function LightingPage({ serviceOnline, serviceState, connectionState, act
   // below read the ref so they stay stable across stack edits.
   const [deviceStacks, setDeviceStacks] = useState<DeviceStack[]>([]);
   const [selectionLockedIds, setSelectionLockedIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [openRgbOwners, setOpenRgbOwners] = useState<OpenRgbOwners | null>(null);
+  const refreshOpenRgbOwners = useCallback(() => {
+    fetchOpenRgbOwners().then(o => { if (o) setOpenRgbOwners(o); }).catch(() => { /* older service: no owners */ });
+  }, []);
   const deviceStacksRef = useRef(deviceStacks);
   deviceStacksRef.current = deviceStacks;
   const deviceDraggingRef = useRef(false);
@@ -1534,6 +1539,9 @@ export function LightingPage({ serviceOnline, serviceState, connectionState, act
     setLightingDeviceControlled(id, nextControlled).catch(() => { /* 3s poll reconciles */ });
     setDevices(prev => prev.map(d => ids.has(d.id) ? { ...d, controlled: nextControlled } : d));
   }, []);
+  const handleSetOwner = useCallback((id: string, owner: string) => {
+    setOpenRgbOwner(id, owner).then(refreshOpenRgbOwners).catch(() => { /* the next refresh reconciles */ });
+  }, [refreshOpenRgbOwners]);
   const handleToggleSelectionLock = useCallback((id: string) => {
     const locked = !selectionLockedIds.has(id);
     setLightingSelectionLock(id, locked).catch(() => { /* 3s poll reconciles */ });
@@ -1829,7 +1837,8 @@ export function LightingPage({ serviceOnline, serviceState, connectionState, act
     setSelectionLockedIds(new Set(data.selectionLocked ?? []));
     void refreshKeyReactive();
     void refreshColorAdjust();
-  }, [refreshKeyReactive, refreshColorAdjust]);
+    refreshOpenRgbOwners();
+  }, [refreshKeyReactive, refreshColorAdjust, refreshOpenRgbOwners]);
 
   useEffect(() => {
     if (!serviceOnline) return;
@@ -3080,6 +3089,8 @@ export function LightingPage({ serviceOnline, serviceState, connectionState, act
             onSetControlled={handleSetControlled}
             selectionLockedIds={selectionLockedIds}
             onToggleSelectionLock={handleToggleSelectionLock}
+            openRgbOwners={openRgbOwners}
+            onSetOwner={handleSetOwner}
             lightingOff={mode === 'none'}
             onOpenSettings={handleOpenSettings}
             onOpenColorTuning={handleOpenColorTuning}

@@ -551,6 +551,40 @@ export interface LightingDevicesResponse {
 export const saveLightingGroups = (groups: DeviceGroup[]) =>
   putService<{ groups: DeviceGroup[] }>('/devices/lighting-devices/groups', { groups });
 
+/** An app that drives lighting over the OpenRGB SDK through Nexus, and whether it is connected now. */
+export interface OpenRgbBrokerClient {
+  name: string;
+  connected: boolean;
+}
+
+/** Who drives an OpenRGB device: 'Nexus', or the app it is leased to (live while that app is connected). */
+export interface OpenRgbDeviceOwner {
+  id: string;
+  name: string;
+  owner: string;
+  leaseLive: boolean;
+}
+
+export interface OpenRgbOwners {
+  broker: boolean;
+  clients: OpenRgbBrokerClient[];
+  devices: OpenRgbDeviceOwner[];
+}
+
+export const OPENRGB_NEXUS_OWNER = 'Nexus';
+
+export const fetchOpenRgbOwners = () => fetchService<OpenRgbOwners>('/devices/openrgb-owners');
+
+/** Leases a device (card id) to an app by name, or gives it back to Nexus. */
+export const setOpenRgbOwner = (deviceId: string, owner: string) =>
+  putService('/devices/openrgb-owners', { deviceId, owner });
+
+/** The owner entry of a card: its id is the device id or the device id plus "-zone". */
+export const ownerOfCard = (owners: OpenRgbOwners | null, cardId: string): OpenRgbDeviceOwner | undefined =>
+  owners?.devices
+    .filter(d => cardId === d.id || cardId.startsWith(`${d.id}-`))
+    .sort((a, b) => b.id.length - a.id.length)[0];
+
 /** Keeps a card out of (or back in) the page's Select all. */
 export const setLightingSelectionLock = (id: string, locked: boolean) =>
   postService('/devices/lighting-devices/selection-lock', { id, locked });

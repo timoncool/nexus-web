@@ -1,7 +1,7 @@
 import { useLayoutEffect, type ReactNode } from 'react';
 import { CircleHelp, FolderPlus, Plus } from 'lucide-react';
 import { TroubleshootLink } from '../../../../components/common/TroubleshootLink/TroubleshootLink';
-import { identifyLightingDevice, type LightingDevice } from '../../../../api/lighting';
+import { identifyLightingDevice, ownerOfCard, type LightingDevice, type OpenRgbOwners } from '../../../../api/lighting';
 import { useTranslation } from '../../../../lib/i18n';
 import { usePersistentState } from '../../../../hooks/usePersistentState';
 import { ZoneCard, ZoneCardStack, zoneCardSelectable, zoneCardUnavailable, type BulkSelection, type DevicePin, type StackPosition } from './ZoneCard';
@@ -39,7 +39,7 @@ import styles from '../LightingPage.module.scss';
  * using the same component/styling as a motherboard group: a chevron, the brand
  * name, a group power switch, and its lights as indented child cards.
  */
-export function DevicePanel({ devices, allDevices, hidingUncontrolled = false, filtering = false, header, pins, versionForSlot, ledFullscreen, pinSource, pinDisabledReason, pinTargetName, onSetPin, pinHintIds, onPinHintPress, onPinHintTarget, pickTargetIds, pulse, selectedIds, onSetSelection, onTogglePower, onSetPower, onToggleControlled, onSetControlled, selectionLockedIds, onToggleSelectionLock, lightingOff, onOpenSettings, onOpenColorTuning, colorTunedIds, keyReactiveIds, keyReactiveOnIds, onOpenKeyReactions, onRenameDevice, onDeviceReorder, communityCounts, onOpenCommunity, lianLiFirmwareHubs, onLianLiTakeControl, firmwareDeviceIds, onFirmwareTakeControl, onOpenDevicePage, onOpenZoneSizes, zoneSizeDeviceIds, onOpenSmartLights, discovery, rgbRunning = false, groups = [], onGroupsChange, stacks = [], onStacksChange, runningApps, curatedControl, onOpenAppStrip, onOpenFixLighting, onOpenFixLightingLink, unboundWireless, onOpenWirelessBinding }: {
+export function DevicePanel({ devices, allDevices, hidingUncontrolled = false, filtering = false, header, pins, versionForSlot, ledFullscreen, pinSource, pinDisabledReason, pinTargetName, onSetPin, pinHintIds, onPinHintPress, onPinHintTarget, pickTargetIds, pulse, selectedIds, onSetSelection, onTogglePower, onSetPower, onToggleControlled, onSetControlled, selectionLockedIds, onToggleSelectionLock, openRgbOwners, onSetOwner, lightingOff, onOpenSettings, onOpenColorTuning, colorTunedIds, keyReactiveIds, keyReactiveOnIds, onOpenKeyReactions, onRenameDevice, onDeviceReorder, communityCounts, onOpenCommunity, lianLiFirmwareHubs, onLianLiTakeControl, firmwareDeviceIds, onFirmwareTakeControl, onOpenDevicePage, onOpenZoneSizes, zoneSizeDeviceIds, onOpenSmartLights, discovery, rgbRunning = false, groups = [], onGroupsChange, stacks = [], onStacksChange, runningApps, curatedControl, onOpenAppStrip, onOpenFixLighting, onOpenFixLightingLink, unboundWireless, onOpenWirelessBinding }: {
   devices: LightingDevice[];
   /** Optional control rendered at the top of the scrolling list (master brightness). */
   /** Every device before the Nexus-Control-off filter, so a group header can
@@ -97,6 +97,9 @@ export function DevicePanel({ devices, allDevices, hidingUncontrolled = false, f
   /** Cards Select all leaves out; they carry a lock mark by the name. */
   selectionLockedIds?: ReadonlySet<string>;
   onToggleSelectionLock?: (id: string) => void;
+  /** Who drives each OpenRGB device (Nexus or an SDK app) and the apps a card can be given to. */
+  openRgbOwners?: OpenRgbOwners | null;
+  onSetOwner?: (id: string, owner: string) => void;
   onOpenSettings: (id: string) => void;
   /** Opens the colour-tuning modal scoped to this card (or, when it is part of
    *  a multi-selection, to the whole selection). */
@@ -492,6 +495,9 @@ export function DevicePanel({ devices, allDevices, hidingUncontrolled = false, f
       onOpenSettings={() => onOpenSettings(d.id)}
       onOpenColorTuning={onOpenColorTuning ? () => onOpenColorTuning(d.id) : undefined}
       selectionLocked={selectionLockedIds?.has(d.id)}
+      owner={ownerOfCard(openRgbOwners ?? null, d.id)}
+      ownerClients={openRgbOwners?.broker ? openRgbOwners.clients : undefined}
+      onSetOwner={onSetOwner ? owner => onSetOwner(d.id, owner) : undefined}
       onToggleSelectionLock={onToggleSelectionLock ? () => onToggleSelectionLock(d.id) : undefined}
       onOpenKeyReactions={onOpenKeyReactions && keyReactiveIds?.has(d.id) ? () => onOpenKeyReactions(d.id) : undefined}
       typeReactiveOn={keyReactiveOnIds?.has(d.id)}

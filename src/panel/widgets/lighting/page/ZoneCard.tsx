@@ -1,8 +1,11 @@
 import { useId, useRef, useState, type ReactNode } from 'react';
-import { Power, PowerOff, Ban, Blend, Eye, Keyboard, Lightbulb, Users, Cpu, Check, Link2Off, Link2, Layers, Lock, LockOpen, MousePointerClick, Paintbrush, Pencil, Pin, PinOff, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { Power, PowerOff, Ban, Blend, Eye, Keyboard, Lightbulb, Users, Cpu, Check, Link2Off, Link2, Layers, Lock, LockOpen, MousePointerClick, Paintbrush, Pencil, Pin, PinOff, RotateCcw, SlidersHorizontal, AppWindow, Undo2 } from 'lucide-react';
 import {
   identifyLightingDevice,
+  OPENRGB_NEXUS_OWNER,
   type LightingDevice,
+  type OpenRgbBrokerClient,
+  type OpenRgbDeviceOwner,
   type PinKind,
 } from '../../../../api/lighting';
 import { LIGHTING_MODE_ICONS } from '../../../../lib/lightingModeIcons';
@@ -292,6 +295,9 @@ export function ZoneCard({
   onOpenColorTuning,
   selectionLocked,
   onToggleSelectionLock,
+  owner,
+  ownerClients,
+  onSetOwner,
   onOpenKeyReactions,
   typeReactiveOn,
   onRename,
@@ -352,6 +358,11 @@ export function ZoneCard({
   selectionLocked?: boolean;
   /** Puts the card in or out of Select all. Single cards only. */
   onToggleSelectionLock?: () => void;
+  /** Who drives this OpenRGB device: Nexus or the SDK app it is leased to. Absent for other cards. */
+  owner?: OpenRgbDeviceOwner;
+  /** Apps the device can be given to; absent while Nexus does not broker the SDK port. */
+  ownerClients?: readonly OpenRgbBrokerClient[];
+  onSetOwner?: (owner: string) => void;
   /** Opens the key-reactions modal on this keyboard. Like Customize it stays
    *  on THIS card in a selection; omitted for a card that is not a per-key keyboard. */
   onOpenKeyReactions?: () => void;
@@ -612,6 +623,22 @@ export function ZoneCard({
         ? { key: 'selectLock', icon: <LockOpen size={14} />, label: t('lighting.devices.selectLockOff'), onSelect: onToggleSelectionLock }
         : { key: 'selectLock', icon: <Lock size={14} />, label: t('lighting.devices.selectLockOn'), description: t('lighting.devices.selectLockDesc'), onSelect: onToggleSelectionLock });
     }
+    if (owner && ownerClients && onSetOwner && !bulk) {
+      const leasedTo = owner.owner !== OPENRGB_NEXUS_OWNER ? owner.owner : null;
+      if (leasedTo) {
+        toggles.push({ key: 'owner-nexus', icon: <Undo2 size={14} />, label: t('lighting.devices.ownerTakeBack'), onSelect: () => onSetOwner(OPENRGB_NEXUS_OWNER) });
+      }
+      for (const client of ownerClients) {
+        if (client.name === leasedTo) continue;
+        toggles.push({
+          key: `owner-${client.name}`,
+          icon: <AppWindow size={14} />,
+          label: t('lighting.devices.ownerGiveTo', { app: client.name }),
+          description: t(client.connected ? 'lighting.devices.ownerGiveToDesc' : 'lighting.devices.ownerGiveToOfflineDesc', { app: client.name }),
+          onSelect: () => onSetOwner(client.name),
+        });
+      }
+    }
     const locate: DeviceMenuItem[] = [];
     if (bulk) {
       if (bulk.identifyCount > 0) {
@@ -742,6 +769,13 @@ export function ZoneCard({
                 <Blend size={12} aria-hidden />
               </span>
             )}
+          </HoverTooltip>
+        )}
+        {owner && owner.owner !== OPENRGB_NEXUS_OWNER && (
+          <HoverTooltip body={t(owner.leaseLive ? 'lighting.devices.ownerLive' : 'lighting.devices.ownerAway', { app: owner.owner })} side="top">
+            <span className={styles.deviceTuneBadge} role="img" aria-label={t(owner.leaseLive ? 'lighting.devices.ownerLive' : 'lighting.devices.ownerAway', { app: owner.owner })}>
+              <AppWindow size={12} aria-hidden style={owner.leaseLive ? undefined : { opacity: 0.45 }} />
+            </span>
           </HoverTooltip>
         )}
         {selectionLocked && (
