@@ -109,6 +109,15 @@ export async function setLianLiWirelessLockBound(enabled: boolean): Promise<bool
   return isOk(await putService<OkResponse>('/devices/lianli-wireless/lock', { enabled }));
 }
 
+/** Moves the dongle and every chain bound to it to another RF channel: 8 or an odd channel 1..39. */
+export async function setLianLiWirelessChannel(channel: number): Promise<boolean> {
+  return isOk(await putService<OkResponse>('/devices/lianli-wireless/channel', { channel }));
+}
+
+/** The channels the dongle firmware accepts; channel k sits at 2402 + 2k MHz. */
+export const LIANLI_WIRELESS_CHANNELS: readonly number[] = [8, ...Array.from({ length: 20 }, (_, i) => i * 2 + 1)];
+export const lianLiChannelMhz = (channel: number) => 2402 + 2 * channel;
+
 export async function setLianLiWirelessAirCount(enabled: boolean): Promise<boolean> {
   return isOk(await putService<OkResponse>('/devices/lianli-wireless/air-count', { enabled }));
 }

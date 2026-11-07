@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type ReactElement } from 'react';
 import { MonitorSmartphone } from 'lucide-react';
 import { SettingsSection, SettingsBlock } from '../../common/SettingsSection/SettingsSection';
-import { SettingRow, SettingToggle, type SettingState } from '../../common/SettingRow/SettingRow';
+import { SettingRow, SettingSelect, SettingToggle, type SettingState } from '../../common/SettingRow/SettingRow';
 import { Button } from '../../common/Button/Button';
 import { ConfirmModal } from '../../common/ConfirmModal/ConfirmModal';
 import { HoverTooltip } from '../../common/HoverTooltip/HoverTooltip';
@@ -12,6 +12,9 @@ import {
   identifyLianLiWirelessFan,
   setLianLiWirelessLockBound,
   setLianLiWirelessAirCount,
+  setLianLiWirelessChannel,
+  LIANLI_WIRELESS_CHANNELS,
+  lianLiChannelMhz,
   type LianLiWirelessFan,
   type LianLiFansState,
 } from '../../../api/lianli-wireless';
@@ -275,6 +278,22 @@ export function LianLiWirelessFansTab({ state, refresh, panelOpener, wired = fal
     if (aliveRef.current) setAirPending(null);
   }, [refresh]);
 
+  const [channelPending, setChannelPending] = useState<number | null>(null);
+  const channelOptions = LIANLI_WIRELESS_CHANNELS.map(ch => ({
+    value: String(ch),
+    label: t(ch === 8 ? 'devices.lianli-wireless.channelOptionDefault' : 'devices.lianli-wireless.channelOption', { channel: ch, mhz: lianLiChannelMhz(ch) }),
+  }));
+  const onChannelChange = useCallback(async (next: number) => {
+    setChannelPending(next);
+    await setLianLiWirelessChannel(next).catch(() => false);
+    try {
+      await refresh();
+    } catch {
+      // The next poll re-reads the state.
+    }
+    if (aliveRef.current) setChannelPending(null);
+  }, [refresh]);
+
   return (
     <>
       {/* HoverTooltip never opens on touch, so the lock reason is also written out. */}
@@ -289,9 +308,20 @@ export function LianLiWirelessFansTab({ state, refresh, panelOpener, wired = fal
         <SettingRow label={t('devices.lianli-wireless.masterMac')}>
           <span className={styles.rowValueMono}>{state?.masterMac || '-'}</span>
         </SettingRow>
-        <SettingRow label={t('devices.lianli-wireless.channel')}>
-          <span className={styles.rowValueMono}>{loaded ? state.channel : '-'}</span>
-        </SettingRow>
+        {loaded ? (
+          <SettingSelect
+            label={t('devices.lianli-wireless.channel')}
+            description={t('devices.lianli-wireless.channelHint')}
+            value={String(channelPending ?? state.channel)}
+            options={channelOptions}
+            onChange={v => { void onChannelChange(Number(v)); }}
+            disabled={channelPending !== null || !state.isConnected}
+          />
+        ) : (
+          <SettingRow label={t('devices.lianli-wireless.channel')}>
+            <span className={styles.rowValueMono}>-</span>
+          </SettingRow>
+        )}
         <SettingRow label={t('devices.lianli-wireless.txFirmware')}>
           <span className={styles.rowValueMono}>{loaded ? state.txFirmwareVersion : '-'}</span>
         </SettingRow>
