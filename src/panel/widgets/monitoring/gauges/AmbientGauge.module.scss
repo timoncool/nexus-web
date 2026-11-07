@@ -16,11 +16,15 @@
 
 .light {
   position: absolute;
-  inset: -12%;
+  left: 50%;
+  top: 50%;
+  width: 31%;
+  height: 31%;
   background-image: radial-gradient(circle, var(--panel-accent) 0%, var(--panel-accent) 100%);
-  filter: blur(var(--fx-blur, 14px)) brightness(var(--glow-brightness, 1)) saturate(var(--glow-saturation, 1));
+  filter: blur(calc(var(--fx-blur, 14px) / 4)) brightness(var(--glow-brightness, 1)) saturate(var(--glow-saturation, 1));
   opacity: var(--fx-light, 1);
-  transform: scale(1.08);
+  transform: translate(-50%, -50%) scale(4.32);
+  will-change: transform;
 }
 
 .vignette,
@@ -39,7 +43,6 @@
 .glass {
   inset: 19%;
   background: rgb(0 0 0 / calc(var(--fx-glass, 0) * 0.35));
-  backdrop-filter: blur(calc(var(--fx-glass, 0) * 10px));
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / calc(var(--fx-glass, 0) * 0.18));
 }
 
