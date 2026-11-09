@@ -32,6 +32,8 @@ export interface GaugeProps {
   ambientHueLut?: readonly (readonly [number, number])[] | null;
   /** LEDs light linearly with the value, the glass through its gamma: dim colours are lifted by value^(1/gamma). */
   ambientGamma?: number | null;
+  /** Degrees the ambient glow is turned by, for a screen whose LED ring sits rotated against the panel. */
+  ambientRotate?: number | null;
   /** The ring's distance in from the rim, gauge units; unset keeps the design's own. */
   ringInset?: number;
   /** Per-piece offset, scale and turn from the layout editor. */

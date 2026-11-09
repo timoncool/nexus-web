@@ -49,7 +49,7 @@ import { DesktopOnlyBadge } from '../../../components/common/DesktopOnlyBadge/De
 import { SettingSlider } from '../../../components/common/SettingRow/SettingRow';
 import { LightingAccentSelect } from './LightingAccentSelect';
 import { HudSettings } from './HudSettings';
-import { GLOW_MAX, GLOW_MIN, RING_LIGHTING_DESIGNS, readSlotLighting } from './slotLighting';
+import { GLOW_MAX, GLOW_MIN, GLOW_ROTATIONS, RING_LIGHTING_DESIGNS, readSlotLighting } from './slotLighting';
 import { SLOT_SIZE_MAX, SLOT_SIZE_MIN, SLOT_SIZE_PARTS, STROKE_SCALE_DESIGNS, readSlotSizes } from './slotSizes';
 import styles from './MonitoringSettings.module.scss';
 
@@ -823,6 +823,13 @@ export function MonitoringSettings({ widget, surface, desktopEditor, onUpdate, s
                   formatValue={v => `${v}%`}
                   onChange={(v, commit) => { if (commit) onUpdate({ [`slot${activeSlot}_glowSaturation`]: v === 100 ? null : v / 100 }); }}
                   onCommit={v => onUpdate({ [`slot${activeSlot}_glowSaturation`]: v === 100 ? null : v / 100 })}
+                />
+                <SettingsSelect
+                  label={t('monitoring.settings.glowRotate')}
+                  description={t('monitoring.settings.glowRotateHint')}
+                  value={String(slotLighting.glowRotate)}
+                  options={GLOW_ROTATIONS.map(d => ({ value: String(d), label: `${d}°` }))}
+                  onChange={v => onUpdate({ [`slot${activeSlot}_glowRotate`]: v === '0' ? null : Number(v) })}
                 />
               </>
             )}

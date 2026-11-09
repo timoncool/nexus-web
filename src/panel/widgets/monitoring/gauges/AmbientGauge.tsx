@@ -68,12 +68,15 @@ function conicOf(
   matrix: GaugeProps['ambientMatrix'],
   lut: GaugeProps['ambientHueLut'],
   gamma: GaugeProps['ambientGamma'],
+  rotate: GaugeProps['ambientRotate'],
 ): string {
   const hued = (c: string) => (lut ? hueCorrected(c, lut) : matrix ? corrected(c, matrix) : c);
   const fix = (c: string) => (gamma && gamma !== 1 ? lifted(hued(c), gamma) : hued(c));
   const parts = stops.map(s => `${fix(s.color)} ${(s.at * 100).toFixed(1)}%`);
-  // Closing on the first colour keeps the seam at 12 o'clock invisible.
-  return `conic-gradient(from 0deg, ${parts.join(', ')}, ${parts[0].split(' ')[0]} 100%)`;
+  // Screens whose LED ring is mounted turned against the panel pass a rotation so the glow lines up with the device.
+  const from = rotate ? ((rotate % 360) + 360) % 360 : 0;
+  // Closing on the first colour keeps the seam invisible.
+  return `conic-gradient(from ${from}deg, ${parts.join(', ')}, ${parts[0].split(' ')[0]} 100%)`;
 }
 
 /**
@@ -88,14 +91,14 @@ const sweepOf = (paint: HudPaint | undefined): string | null => {
 };
 const colorOf = (paint: HudPaint | undefined): string | undefined => (paint && 'color' in paint ? paint.color : undefined);
 
-export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, ambientHueLut, ambientGamma, strokeScale = 1, ringInset = 7, parts, hud, fx, blend }: GaugeProps) {
+export function AmbientGauge({ value, formatted, label, ambient, ambientMatrix, ambientHueLut, ambientGamma, ambientRotate, strokeScale = 1, ringInset = 7, parts, hud, fx, blend }: GaugeProps) {
   const id = useId().replace(/:/g, '');
   const clamped = Math.max(0, Math.min(100, value));
   const stroke = STROKE * strokeScale;
   const radius = GAUGE_FIGURE_OUTER - ringInset - stroke / 2;
   const circumference = 2 * Math.PI * radius;
   const fill = (clamped / 100) * circumference;
-  const light: CSSProperties | undefined = ambient && ambient.length > 0 ? { backgroundImage: conicOf(ambient, ambientMatrix, ambientHueLut, ambientGamma) } : undefined;
+  const light: CSSProperties | undefined = ambient && ambient.length > 0 ? { backgroundImage: conicOf(ambient, ambientMatrix, ambientHueLut, ambientGamma, ambientRotate) } : undefined;
 
   const ringSweep = sweepOf(hud?.ring);
   const trackSweep = sweepOf(hud?.track);

@@ -21,6 +21,8 @@ export interface SlotLighting {
   glowHueLut: readonly (readonly [number, number])[] | null;
   /** Value curve of the glow, 1 leaves dim colours as sent. */
   glowGamma: number;
+  /** Degrees the glow is turned by, for a screen whose LED ring sits rotated against the panel (0/90/180/270). */
+  glowRotate: number;
 }
 
 export const GLOW_MIN = 0.5;
@@ -34,6 +36,13 @@ const glowFactor = (value: unknown): number => {
 const glowGamma = (value: unknown): number => {
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? Math.min(4, Math.max(1, n)) : 1;
+};
+
+export const GLOW_ROTATIONS = [0, 90, 180, 270] as const;
+
+const glowRotate = (value: unknown): number => {
+  const n = Math.round(Number(value) / 90) * 90;
+  return Number.isFinite(n) ? ((n % 360) + 360) % 360 : 0;
 };
 
 /** Designs that draw the lighting pattern, the glow and the halo on their ring. */
@@ -68,6 +77,7 @@ export function readSlotLighting(config: Record<string, unknown> | undefined, sl
     glowMatrix: parseMatrix(config?.[`slot${slot}_glowMatrix`]),
     glowHueLut: parseHueLut(config?.[`slot${slot}_glowHueLut`]),
     glowGamma: glowGamma(config?.[`slot${slot}_glowGamma`]),
+    glowRotate: glowRotate(config?.[`slot${slot}_glowRotate`]),
   };
 }
 
