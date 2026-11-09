@@ -37,6 +37,16 @@ export function parseLightingSpec(spec: string | null | undefined): LightingSpec
   return { id: spec.slice(0, at), from: Math.min(from, to), to: Math.max(from, to) };
 }
 
+/**
+ * A screen's spec names one card, or two joined by "+": the two light strips either side of the screen.
+ * The first strip fills the first half of the circle in LED order, the second the other half in reverse,
+ * so both run from the same end of the fan.
+ */
+export function parseLightingSpecs(spec: string | null | undefined): LightingSpec[] {
+  if (!spec) return [];
+  return spec.split('+').slice(0, 2).map(part => parseLightingSpec(part)).filter((p): p is LightingSpec => p !== null);
+}
+
 function sliceLeds(bytes: Uint8Array, spec: LightingSpec): Uint8Array {
   if (spec.from === null || spec.to === null) return bytes;
   return bytes.subarray(spec.from * 3, Math.min(bytes.length, (spec.to + 1) * 3));
@@ -140,20 +150,36 @@ export interface LightingLive {
 
 const NO_LIVE: LightingLive = { accent: null, stops: null };
 
-/** Live colours of a lighting card (or one fan of it), eased so a moving effect does not strobe the screen. */
+/** The LEDs of a second strip in reverse order, so the circle runs on from the first strip's far end. */
+function reversedLeds(bytes: Uint8Array): Uint8Array {
+  const count = Math.floor(bytes.length / 3);
+  const out = new Uint8Array(count * 3);
+  for (let i = 0; i < count; i++) out.set(bytes.subarray(i * 3, i * 3 + 3), (count - 1 - i) * 3);
+  return out;
+}
+
+/** Live colours of the lighting around a screen (one card, or its two strips), eased so a moving effect does not strobe the screen. */
 export function useLightingLive(spec: string | null): LightingLive {
-  const parsed = parseLightingSpec(spec);
-  const enabled = !!parsed && !isTunnelActive();
+  const parts = parseLightingSpecs(spec);
+  const first = parts[0] ?? null;
+  const second = parts[1] ?? null;
+  const enabled = !!first && !isTunnelActive();
   const { live } = useLightingFrames(enabled, true);
-  const card = useLightingCard(parsed?.id ?? null, enabled);
+  const card = useLightingCard(first?.id ?? null, enabled);
+  const secondCard = useLightingCard(second?.id ?? null, enabled && !!second);
   const frameIndex = card?.frameIndex ?? null;
+  const secondIndex = second ? secondCard?.frameIndex ?? null : -1;
   const [state, setState] = useState<LightingLive>(NO_LIVE);
-  const from = parsed?.from ?? null;
-  const to = parsed?.to ?? null;
+  const from = first?.from ?? null;
+  const to = first?.to ?? null;
+  const secondFrom = second?.from ?? null;
+  const secondTo = second?.to ?? null;
 
   useEffect(() => {
-    if (!enabled || !live || frameIndex === null) { setState(NO_LIVE); return undefined; }
+    if (!enabled || !live || frameIndex === null || secondIndex === null) { setState(NO_LIVE); return undefined; }
     const range: LightingSpec = { id: '', from, to };
+    const secondRange: LightingSpec = { id: '', from: secondFrom, to: secondTo };
+    const paired = secondIndex >= 0;
     let accent: Rgb | null = null;
     let leds: Rgb[] = [];
     let lastEmit = 0;
@@ -161,7 +187,16 @@ export function useLightingLive(spec: string | null): LightingLive {
     return subscribeLedFrame(f => {
       const all = f.devices?.get(frameIndex);
       if (!all) return;
-      const bytes = sliceLeds(all, range);
+      let bytes = sliceLeds(all, range);
+      if (paired) {
+        const other = f.devices?.get(secondIndex);
+        if (!other) return;
+        const tail = reversedLeds(sliceLeds(other, secondRange));
+        const joined = new Uint8Array(bytes.length + tail.length);
+        joined.set(bytes, 0);
+        joined.set(tail, bytes.length);
+        bytes = joined;
+      }
       const count = Math.floor(bytes.length / 3);
       if (count === 0) return;
       const target = dominantLedColor(bytes);
@@ -181,7 +216,7 @@ export function useLightingLive(spec: string | null): LightingLive {
       if (now - lastEmit < EMIT_INTERVAL_MS) return;
       lastEmit = now;
       const stops: GaugeGradientStop[] = leds.map((led, i) => ({
-        at: count === 1 ? 0 : i / (count - 1),
+        at: paired ? (i + 0.5) / count : count === 1 ? 0 : i / (count - 1),
         color: toHex(led),
       }));
       const accentHex = accent ? toHex(accent) : null;
@@ -190,7 +225,7 @@ export function useLightingLive(spec: string | null): LightingLive {
       lastKey = key;
       setState({ accent: accentHex, stops });
     });
-  }, [enabled, live, frameIndex, from, to]);
+  }, [enabled, live, frameIndex, from, to, secondIndex, secondFrom, secondTo]);
 
   return enabled ? state : NO_LIVE;
 }
@@ -211,7 +246,7 @@ export function withLightingAccent(theme: PanelThemeState, liveHex: string | nul
 
 /** Paints the part of the lighting canvas a card covers onto `canvas`, so the screen shows the same texture its LEDs sample. */
 export function useLightingTexture(spec: string | null, canvas: HTMLCanvasElement | null): boolean {
-  const parsed = parseLightingSpec(spec);
+  const parsed = parseLightingSpecs(spec)[0] ?? null;
   const enabled = !!parsed && !!canvas && !isTunnelActive();
   const { live } = useLightingFrames(enabled);
   const card = useLightingCard(parsed?.id ?? null, enabled);
