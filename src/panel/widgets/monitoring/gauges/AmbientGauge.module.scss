@@ -36,18 +36,27 @@
 }
 
 .vignette {
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: radial-gradient(circle, transparent 45%, rgb(0 0 0 / calc(var(--fx-vignette, 0) * 0.75)) 100%);
 }
 
 .glass {
-  inset: 19%;
+  top: 19%;
+  right: 19%;
+  bottom: 19%;
+  left: 19%;
   background: rgb(0 0 0 / calc(var(--fx-glass, 0) * 0.35));
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / calc(var(--fx-glass, 0) * 0.18));
 }
 
 .bevel {
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: radial-gradient(ellipse 60% 35% at 35% 22%, rgb(255 255 255 / calc(var(--fx-bevel, 0) * 0.3)), transparent 70%);
   box-shadow:
     inset calc(var(--fx-bevel, 0) * 1.6cqw) calc(var(--fx-bevel, 0) * 1.6cqw) calc(var(--fx-bevel, 0) * 3cqw) rgb(255 255 255 / calc(var(--fx-bevel, 0) * 0.35)),
@@ -65,7 +74,10 @@
 
 .svg {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   width: 100%;
   height: 100%;
 }
