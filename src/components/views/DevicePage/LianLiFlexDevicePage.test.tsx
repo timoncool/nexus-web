@@ -46,6 +46,8 @@ vi.mock('../../../api/lianli-flex', async importOriginal => ({
 }));
 
 vi.mock('../../../api/lianli-wireless', () => ({
+  LIANLI_WIRELESS_CHANNELS: [8, 1, 3],
+  lianLiChannelMhz: (channel: number) => 2400 + channel,
   getLianLiWirelessState: (...a: any[]) => mockWirelessState(...a),
   identifyLianLiWirelessFan: (...a: any[]) => mockWirelessIdentify(...a),
   bindLianLiWirelessFan: () => Promise.resolve(true),

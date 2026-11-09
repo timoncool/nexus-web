@@ -30,6 +30,8 @@ const mockSetLianLiWirelessLockBound = vi.fn();
 const mockGetLianLiAioScreen = vi.fn(() => Promise.resolve(null as unknown));
 
 vi.mock('../../../api/lianli-wireless', () => ({
+  LIANLI_WIRELESS_CHANNELS: [8, 1, 3, 7, 9],
+  lianLiChannelMhz: (channel: number) => 2400 + channel,
   getLianLiWirelessState: (...args: any[]) => mockGetLianLiWirelessState(...args),
   bindLianLiWirelessFan: (...args: any[]) => mockBindLianLiWirelessFan(...args),
   unbindLianLiWirelessFan: (...args: any[]) => mockUnbindLianLiWirelessFan(...args),
@@ -186,16 +188,16 @@ describe('LianLiWirelessDevicePage', () => {
     await act(async () => {
       render(<LianLiWirelessDevicePage />);
     });
-    expect(screen.getByText('8')).toBeInTheDocument();
+    expect(screen.getByText(/"channel":8,/)).toBeInTheDocument();
     let resolveSlow: (v: unknown) => void = () => {};
     mockGetLianLiWirelessState.mockImplementationOnce(() => new Promise(r => { resolveSlow = r; }));
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
     mockGetLianLiWirelessState.mockResolvedValue({ ...connectedState, channel: 9 });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
-    expect(screen.getByText('9')).toBeInTheDocument();
+    expect(screen.getByText(/"channel":9,/)).toBeInTheDocument();
     await act(async () => { resolveSlow({ ...connectedState, channel: 7 }); });
-    expect(screen.getByText('9')).toBeInTheDocument();
-    expect(screen.queryByText('7')).not.toBeInTheDocument();
+    expect(screen.getByText(/"channel":9,/)).toBeInTheDocument();
+    expect(screen.queryByText(/"channel":7,/)).not.toBeInTheDocument();
   });
 
   it('drops a slow first load that resolves after a newer interval tick', async () => {
@@ -206,10 +208,10 @@ describe('LianLiWirelessDevicePage', () => {
     });
     mockGetLianLiWirelessState.mockResolvedValue({ ...connectedState, channel: 9 });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
-    expect(screen.getByText('9')).toBeInTheDocument();
+    expect(screen.getByText(/"channel":9,/)).toBeInTheDocument();
     await act(async () => { resolveSlow({ ...connectedState, channel: 7 }); });
-    expect(screen.getByText('9')).toBeInTheDocument();
-    expect(screen.queryByText('7')).not.toBeInTheDocument();
+    expect(screen.getByText(/"channel":9,/)).toBeInTheDocument();
+    expect(screen.queryByText(/"channel":7,/)).not.toBeInTheDocument();
   });
 
   it('shows the bound badge for a fan bound to us', async () => {

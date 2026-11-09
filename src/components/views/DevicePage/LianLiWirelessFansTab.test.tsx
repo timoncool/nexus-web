@@ -19,6 +19,8 @@ const mockIdentifyLianLiWirelessFan = vi.fn();
 const mockSetLianLiWirelessLockBound = vi.fn();
 
 vi.mock('../../../api/lianli-wireless', () => ({
+  LIANLI_WIRELESS_CHANNELS: [8, 1, 3],
+  lianLiChannelMhz: (channel: number) => 2400 + channel,
   bindLianLiWirelessFan: (...args: any[]) => mockBindLianLiWirelessFan(...args),
   unbindLianLiWirelessFan: (...args: any[]) => mockUnbindLianLiWirelessFan(...args),
   identifyLianLiWirelessFan: (...args: any[]) => mockIdentifyLianLiWirelessFan(...args),
