@@ -5,6 +5,7 @@ import { subscribeLedFrame, type LedFrame } from '../lib/ledFrameStore';
 
 vi.mock('../api/lighting', () => ({
   lightingOutputUrl: () => Promise.resolve('ws://localhost:9400/lighting/output'),
+  lightingLedsUrl: () => Promise.resolve('ws://localhost:9400/lighting/output?leds=1'),
 }));
 
 class FakeWebSocket {
@@ -71,6 +72,30 @@ describe('useLightingFrames', () => {
     unsubscribe();
     unmount();
     expect(socket.closed).toBe(true);
+  });
+
+  it('asks for the LED-only stream and goes live on a frame that carries device LEDs without a canvas', async () => {
+    const { result, unmount } = renderHook(() => useLightingFrames(true, true));
+    await waitFor(() => expect(FakeWebSocket.instances).toHaveLength(1));
+    const socket = FakeWebSocket.instances[0];
+    expect(socket.url).toContain('leds=1');
+
+    act(() => socket.onopen?.());
+    expect(result.current).toEqual({ connected: true, live: false });
+
+    act(() => socket.onmessage?.({ data: frameWithDevices(0, 0, [{ index: 3, rgb: [9, 8, 7] }]).buffer }));
+    expect(result.current).toEqual({ connected: true, live: true });
+    const seen: LedFrame[] = [];
+    const unsubscribe = subscribeLedFrame(f => seen.push(f));
+    expect(seen[0].pixels).toBeNull();
+    expect([...(seen[0].devices?.get(3) ?? [])]).toEqual([9, 8, 7]);
+
+    unsubscribe();
+    unmount();
+    // The store keeps nothing of a closed LED-only stream.
+    const after: LedFrame[] = [];
+    subscribeLedFrame(f => after.push(f))();
+    expect(after[0].devices?.size ?? 0).toBe(0);
   });
 
   it('stays empty and opens no socket while disabled', async () => {

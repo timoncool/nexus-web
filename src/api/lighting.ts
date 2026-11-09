@@ -13,6 +13,11 @@ export async function lightingOutputUrl(): Promise<string> {
   return resolveAuthWs('/lighting/output');
 }
 
+/** The same stream without the canvas: device LED colours alone, a few times a second. A service that predates it sends the full stream. */
+export async function lightingLedsUrl(): Promise<string> {
+  return resolveAuthWs('/lighting/output?leds=1');
+}
+
 /** Live capture of the selected mirror monitor, in the lighting output frame layout. */
 export async function screenPreviewUrl(): Promise<string> {
   return resolveAuthWs('/lighting/screen/preview');

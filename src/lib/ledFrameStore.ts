@@ -39,7 +39,7 @@ export function publishLedFrame(
 
 /** Clears the frame so consumers fall back to their idle track (lighting off). */
 export function clearLedFrame(): void {
-  if (frame.pixels === null) return;
+  if (frame.pixels === null && !frame.devices?.size) return;
   frame = { pixels: null, w: 0, h: 0, seq: frame.seq + 1, devices: NO_DEVICES };
 }
 

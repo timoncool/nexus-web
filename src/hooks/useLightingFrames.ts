@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react';
-import { lightingOutputUrl } from '../api/lighting';
+import { lightingLedsUrl, lightingOutputUrl } from '../api/lighting';
 import { publishLedFrame, clearLedFrame } from '../lib/ledFrameStore';
 
 export interface LightingFrameState {
   connected: boolean;
-  /** At least one frame carrying canvas pixels arrived on this connection. */
+  /** At least one frame carrying what was asked for arrived on this connection: canvas pixels, or device LEDs on the LED-only stream. */
   live: boolean;
 }
 
 const EMPTY: LightingFrameState = { connected: false, live: false };
 
-/** Keeps the lighting output socket open; frames go to ledFrameStore, not React state. */
-export function useLightingFrames(enabled = true): LightingFrameState {
+/**
+ * Keeps the lighting output socket open; frames go to ledFrameStore, not React state.
+ * `ledsOnly` asks for device LED colours without the canvas, for a consumer that never paints the canvas.
+ */
+export function useLightingFrames(enabled = true, ledsOnly = false): LightingFrameState {
   const [state, setState] = useState<LightingFrameState>(EMPTY);
 
   useEffect(() => {
@@ -25,15 +28,16 @@ export function useLightingFrames(enabled = true): LightingFrameState {
     let live = false;
 
     const connect = async () => {
-      const url = await lightingOutputUrl();
+      const url = await (ledsOnly ? lightingLedsUrl() : lightingOutputUrl());
       socket = new WebSocket(url);
       socket.binaryType = 'arraybuffer';
       socket.onopen = () => { if (!cancelled) setState(p => (p.connected ? p : { ...p, connected: true })); };
       socket.onmessage = (event) => {
         if (!(event.data instanceof ArrayBuffer)) return;
         const parsed = parseFrame(new Uint8Array(event.data));
-        publishLedFrame(parsed.canvasPixels, parsed.canvasW, parsed.canvasH, parsed.devices);
-        const nowLive = !!parsed.canvasPixels && parsed.canvasW > 0;
+        const hasCanvas = !!parsed.canvasPixels && parsed.canvasW > 0;
+        publishLedFrame(hasCanvas ? parsed.canvasPixels : null, parsed.canvasW, parsed.canvasH, parsed.devices);
+        const nowLive = ledsOnly ? parsed.devices.size > 0 : hasCanvas;
         if (nowLive !== live && !cancelled) {
           live = nowLive;
           setState({ connected: true, live });
@@ -48,7 +52,7 @@ export function useLightingFrames(enabled = true): LightingFrameState {
     // handler, so without this the last frame stays in the module-scope store
     // and every card that subscribes afterwards paints it, frozen, forever.
     return () => { cancelled = true; try { socket?.close(); } catch { /* socket already closed/torn down */ } if (reconnectTimer !== null) clearTimeout(reconnectTimer); clearLedFrame(); };
-  }, [enabled]);
+  }, [enabled, ledsOnly]);
 
   return state;
 }

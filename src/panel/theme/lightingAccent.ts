@@ -144,7 +144,7 @@ const NO_LIVE: LightingLive = { accent: null, stops: null };
 export function useLightingLive(spec: string | null): LightingLive {
   const parsed = parseLightingSpec(spec);
   const enabled = !!parsed && !isTunnelActive();
-  const { live } = useLightingFrames(enabled);
+  const { live } = useLightingFrames(enabled, true);
   const card = useLightingCard(parsed?.id ?? null, enabled);
   const frameIndex = card?.frameIndex ?? null;
   const [state, setState] = useState<LightingLive>(NO_LIVE);
