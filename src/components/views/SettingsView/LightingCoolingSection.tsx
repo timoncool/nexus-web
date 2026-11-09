@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { CircuitBoard, Cpu, Lightbulb, Lock, Moon, RotateCcw, Speaker, Sun, Zap } from 'lucide-react';
+import { CircuitBoard, Cpu, Flame, Lightbulb, Lock, Moon, Palette, RotateCcw, Speaker, Sun, Zap } from 'lucide-react';
 import { Button } from '../../common/Button/Button';
 import { ConfirmModal } from '../../common/ConfirmModal/ConfirmModal';
 import { useToastSafe } from '../../common/Toast/Toast';
@@ -11,8 +11,9 @@ import { SOFTWARE_RENDER_VALUE, realCpuName, showRenderGpuPicker, showSoftwareOp
 import { BrightnessScheduleModal } from './BrightnessScheduleModal';
 import { ThermalGuardSetting } from './ThermalGuardSetting';
 import {
-  fetchLockBlackout, fetchRenderGpu, fetchSleepBlackout, restartService, setLockBlackout,
-  setRenderGpu, setSleepBlackout,
+  fetchAuroraSync, fetchHeatTint, fetchLockBlackout, fetchRenderGpu, fetchSleepBlackout, restartService,
+  setAuroraSync, setHeatTint, setLockBlackout, setRenderGpu, setSleepBlackout,
+  type AuroraSyncSettings, type HeatTintSettings,
 } from '../../../api/lighting';
 import { useBrightnessSchedule } from '../../../hooks/useBrightnessSchedule';
 import { useLightingAudioOutput } from '../../../hooks/useLightingAudioOutput';
@@ -66,6 +67,8 @@ export function LightingCoolingSection({ serviceOnline, platform }: LightingCool
   // (on) so the row never renders off for a moment and reads as a user choice.
   const showLockBlackout = platform === 'windows' || platform === 'macos' || platform === 'linux';
   const [lockBlackout, setLockBlackoutValue] = useState(true);
+  const [heatTint, setHeatTintValue] = useState<HeatTintSettings | null>(null);
+  const [auroraSync, setAuroraSyncValue] = useState<AuroraSyncSettings | null>(null);
   // Master-brightness schedule: every platform, since it lives in the frame
   // writers rather than in any OS hook.
   const brightnessSchedule = useBrightnessSchedule(serviceOnline);
@@ -113,6 +116,14 @@ export function LightingCoolingSection({ serviceOnline, platform }: LightingCool
     return () => { cancelled = true; };
   }, [showLockBlackout, serviceOnline]);
 
+  useEffect(() => {
+    if (!serviceOnline) return;
+    let cancelled = false;
+    fetchHeatTint().then(r => { if (!cancelled && r) setHeatTintValue(r); }).catch(() => { /* row stays hidden */ });
+    fetchAuroraSync().then(r => { if (!cancelled && r) setAuroraSyncValue(r); }).catch(() => { /* row stays hidden */ });
+    return () => { cancelled = true; };
+  }, [serviceOnline]);
+
   const cpuOptions = useMemo(() => listTempSensors(sensors.cpu), [sensors.cpu]);
   const gpuOptions = useMemo(() => listTempSensors(sensors.gpu), [sensors.gpu]);
   const cpuDefault = useMemo(() => defaultCpuTempSensor(sensors.cpu), [sensors.cpu]);
@@ -139,6 +150,22 @@ export function LightingCoolingSection({ serviceOnline, platform }: LightingCool
     setLockBlackoutValue(next);
     try { await setLockBlackout(next); }
     catch { setLockBlackoutValue(!next); }
+  };
+  const handleHeatTintChange = async (next: boolean) => {
+    if (!heatTint) return;
+    const previous = heatTint;
+    const updated = { ...heatTint, enabled: next };
+    setHeatTintValue(updated);
+    try { await setHeatTint(updated); }
+    catch { setHeatTintValue(previous); }
+  };
+  const handleAuroraSyncChange = async (next: boolean) => {
+    if (!auroraSync) return;
+    const previous = auroraSync;
+    const updated = { ...auroraSync, enabled: next };
+    setAuroraSyncValue(updated);
+    try { await setAuroraSync(updated); }
+    catch { setAuroraSyncValue(previous); }
   };
   const handleRestart = async () => {
     try { await restartService(); } catch { /* the socket drops as the service restarts */ }
@@ -246,6 +273,30 @@ export function LightingCoolingSection({ serviceOnline, platform }: LightingCool
             description={t('lighting.lockBlackout.description')}
             checked={lockBlackout}
             onChange={handleLockBlackoutChange}
+            disabled={!serviceOnline}
+          />
+        )}
+        {heatTint && (
+          <SettingToggle
+            label={t('lighting.heatTint.label')}
+            icon={<Flame />}
+            iconLeading="subtle"
+            anchorId="set-heat-tint"
+            description={t('lighting.heatTint.description')}
+            checked={heatTint.enabled}
+            onChange={handleHeatTintChange}
+            disabled={!serviceOnline}
+          />
+        )}
+        {auroraSync && (
+          <SettingToggle
+            label={t('lighting.auroraSync.label')}
+            icon={<Palette />}
+            iconLeading="subtle"
+            anchorId="set-aurora-sync"
+            description={t('lighting.auroraSync.description')}
+            checked={auroraSync.enabled}
+            onChange={handleAuroraSyncChange}
             disabled={!serviceOnline}
           />
         )}

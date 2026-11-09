@@ -1418,5 +1418,26 @@ export interface IdleDimState extends IdleDimSettings {
 
 export const fetchIdleDim = () => fetchService<IdleDimState>('/lighting/idle-dim');
 
+/** A warm PC pulls every effect toward red; the hottest bound reading over its own range sets how far. */
+export interface HeatTintSettings {
+  enabled: boolean;
+  strength: number;
+  sensors: { category: string; sensor: string; min: number; max: number }[];
+}
+
+export const fetchHeatTint = () => fetchService<HeatTintSettings>('/lighting/heat-tint');
+
+export const setHeatTint = (settings: HeatTintSettings) => postService('/lighting/heat-tint', settings);
+
+/** The lighting's main colours handed to Aurora through its HTTP listener on `port`. */
+export interface AuroraSyncSettings {
+  enabled: boolean;
+  port: number;
+}
+
+export const fetchAuroraSync = () => fetchService<AuroraSyncSettings>('/lighting/aurora-sync');
+
+export const setAuroraSync = (settings: AuroraSyncSettings) => postService('/lighting/aurora-sync', settings);
+
 export const setIdleDim = (settings: IdleDimSettings) =>
   postService('/lighting/idle-dim', settings);
